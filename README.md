@@ -46,6 +46,7 @@ services:
       - kusanagi-data
     links:
       - kusanagi-php7:php
+      - kusanagi-mariadb:mysql
     ports:
       - "80:80"
       - "443:443"
