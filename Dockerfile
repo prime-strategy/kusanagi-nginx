@@ -189,7 +189,7 @@ ENV LUAJIT_INC /usr/include/luajit-$LUA_VERSION
 		--with-cc-opt='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic  -Wno-deprecated-declarations -Wno-cast-function-type -Wno-unused-parameter -Wno-stringop-truncation -Wno-stringop-overflow ' \
 		--with-ld-opt='-Wl,-rpath,$LUAJITLIB' \
 	    --prefix=/etc/nginx \
-	&& make 
+	&& make \
 	&& find . -type f -a -name 'nginx' -o -name '*.so*' | xargs strip \
 	&& make install \
 	&& mkdir -p /usr/lib/systemd/system  \
