@@ -25,66 +25,48 @@ ENV LUAJIT_VERSION 2.1.0-beta3
 ENV LUA_VERSION 2.1
 ENV lua_nginx_module_name lua-nginx-module
 ENV lua_nginx_module_version 0.10.13
+ENV LUAJIT_LIB /usr/lib
+ENV LUAJIT_INC /usr/include/luajit-$LUA_VERSION
 
-# prep
+# add user
 RUN : \
 	&& apk update && apk upgrade \
-	&& apk add --force \
-		musl \
-		openssl \
-		libaio \
-		curl \
-		perl \
-		libstdc++ \
-		ruby \
-		ruby-etc \
-		ruby-rails \
-		ruby-rake \
-		luajit \
-		pcre \
-		bz2 \
-		libpng \
-		freetype \
-		libxpm \
-		expat \
-		tiff \
-		libxcb \
-		lua \
-		curl \
 	&& addgroup -g 1001 www \
 	&& addgroup -g 1000 kusanagi \
-	&& adduser -h /home/httpd -s /bin/false -g www -D -H  httpd \
+	&& adduser -h /home/httpd -s /bin/nologin -g www -D -H httpd \
 	&& adduser -h /home/kusanagi -s /bin/bash -G kusanagi -G www -u 1000 -D kusanagi \
 	&& chmod 755 /home/kusanagi \
-	&& mkdir -p /tmp/build \
-	&& cd /tmp/build \
-	&& wget http://nginx.org/download/nginx-${KUSANAGI_NGINX_VERSION}.tar.gz \
-	&& tar xf nginx-${KUSANAGI_NGINX_VERSION}.tar.gz \
-	&& mkdir nginx-${KUSANAGI_NGINX_VERSION}/extensions 
+	&& mkdir /tmp/build \
+	&& : # END of RUN
 
-COPY files/nginx.service /tmp/build/
-COPY files/nginx.conf /tmp/build/
-COPY files/logrotate.d_nginx /tmp/build/
-COPY files/nginx_httpd.conf /tmp/build/
-COPY files/nginx_ssl.conf /tmp/build/
-COPY files/naxsi.d.tar.gz /tmp/build/
-COPY files/kusanagi_naxsi_core.conf /tmp/build/
-COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build/
-COPY files/naxsi-stringop-overflow.patch /tmp/build/
-COPY files/security.conf /tmp/build/
+COPY files/nginx.conf /tmp/build
+COPY files/logrotate.d_nginx /tmp/build
+COPY files/nginx_httpd.conf /tmp/build
+COPY files/nginx_ssl.conf /tmp/build
+COPY files/naxsi.d.tar.gz /tmp/build
+COPY files/kusanagi_naxsi_core.conf /tmp/build
+COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
+COPY files/naxsi-stringop-overflow.patch /tmp/build
+COPY files/security.conf /tmp/build
 
-# build
+	# prep
 RUN : \
-	&& DEP="gcc \
+\
+	# add build pkg
+	&& apk add --no-cache --virtual .builddep \
+		gcc \
 		g++ \
 		make \
-		elfutils \
+		libc-dev \
 		autoconf \
 		automake \
 		patch \
+		ruby-rake \
+		curl \
 		curl-dev \
 		musl-dev \
 		perl-dev \
+		libxslt-dev \
 		openssl-dev \
 		linux-headers \
 		luajit-dev \
@@ -95,15 +77,18 @@ RUN : \
 		tiff-dev \
 		libxcb-dev \
 		lua-dev \
-		libaio-dev \
 		pcre-dev \
 		geoip-dev \
 		gd-dev \
+		ruby-etc \
 		ruby-dev \
-		bz2-dev \
-	" \
-	&& apk add --force --no-cache $DEP 
-	RUN cd /tmp/build/nginx-${KUSANAGI_NGINX_VERSION}/extensions \
+		libxpm-dev \
+		fontconfig-dev \
+	&& cd /tmp/build \
+	&& wget http://nginx.org/download/nginx-${KUSANAGI_NGINX_VERSION}.tar.gz \
+	&& tar xf nginx-${KUSANAGI_NGINX_VERSION}.tar.gz \
+	&& mkdir nginx-${KUSANAGI_NGINX_VERSION}/extensions \
+	&& cd ./nginx-${KUSANAGI_NGINX_VERSION}/extensions \
 	&& curl -Lo nginx-ct-${nginx_ct_version}.tar.gz https://github.com/grahamedgecombe/nginx-ct/archive/v${nginx_ct_version}.tar.gz \
 	&& curl -Lo ngx_cache_purge-${ngx_cache_purge_version}.tar.gz https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz \
 	&& curl -Lo ngx_brotli-${ngx_brotli_version}.tar.gz https://github.com/google/ngx_brotli/archive/${ngx_brotli_version}.tar.gz \
@@ -130,16 +115,15 @@ RUN : \
 	&& (test -d ngx_brotli/deps/brotli && rmdir ngx_brotli/deps/brotli) \
 	&& mv brotli-${brotli_version} ngx_brotli/deps/brotli \
 	&& cd .. \
-	&& patch -p1 < ../fast_cgiparams_CVE-2016-5387.patch 
-
-ENV LUAJIT_LIB /usr/lib
-ENV LUAJIT_INC /usr/include/luajit-$LUA_VERSION
-
-	RUN cd /tmp/build/nginx-${KUSANAGI_NGINX_VERSION} \  
-	&& ./configure \
+	&& patch -p1 < ../fast_cgiparams_CVE-2016-5387.patch \
+\
+# configure
+	&& cd /tmp/build/nginx-${KUSANAGI_NGINX_VERSION} \  
+	&& CONF="\
+		--prefix=/etc/nginx \
 		--conf-path=/etc/nginx/nginx.conf \
-		--add-module=./extensions/${naxsi_tarball_name}/naxsi_src \
 		--sbin-path=/usr/sbin/nginx \
+		--modules-path=/usr/lib/nginx/modules \
 		--error-log-path=/var/log/nginx/error.log \
 		--http-log-path=/var/log/nginx/access.log \
 		--pid-path=/var/run/nginx.pid \
@@ -149,8 +133,8 @@ ENV LUAJIT_INC /usr/include/luajit-$LUA_VERSION
 		--http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
 		--http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
 		--http-scgi-temp-path=/var/cache/nginx/scgi_temp \
-		--user=nginx \
-		--group=nginx \
+		--user=httpd \
+		--group=www \
 		--with-http_ssl_module \
 		--with-http_realip_module \
 		--with-http_addition_module \
@@ -164,13 +148,15 @@ ENV LUAJIT_INC /usr/include/luajit-$LUA_VERSION
 		--with-http_secure_link_module \
 		--with-http_stub_status_module \
 		--with-http_auth_request_module \
-		--with-mail \
+		--with-http_xslt_module \
+		--with-http_image_filter_module \
+		--with-http_geoip_module \
 		--with-threads \
 		--with-stream \
 		--with-stream_ssl_module \
 		--with-stream_ssl_preread_module \
 		--with-stream_realip_module \
-		--with-stream_geoip_module=dynamic \
+		--with-stream_geoip_module \
 		--with-http_slice_module \
 		--with-mail \
 		--with-mail_ssl_module \
@@ -185,32 +171,67 @@ ENV LUAJIT_INC /usr/include/luajit-$LUA_VERSION
 		--add-module=./extensions/ngx_cache_purge \
 		--add-module=./extensions/nginx-ct \
 		--add-module=./extensions/ngx_brotli \
+		--add-module=./extensions/${naxsi_tarball_name}/naxsi_src \
 		--add-module=./extensions/${passenger_tarball_name}/src/nginx_module \
-		--with-cc-opt='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic  -Wno-deprecated-declarations -Wno-cast-function-type -Wno-unused-parameter -Wno-stringop-truncation -Wno-stringop-overflow ' \
-		--with-ld-opt='-Wl,-rpath,$LUAJITLIB' \
-	    --prefix=/etc/nginx \
-	&& make \
+	" \
+	&& CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
+		-fexceptions -fstack-protector \
+		--param=ssp-buffer-size=4 -m64 -mtune=generic \
+		-Wno-deprecated-declarations \
+		-Wno-cast-function-type \
+		-Wno-unused-parameter \
+		-Wno-stringop-truncation \
+		-Wno-stringop-overflow' \
+	&& ./configure $CONF --with-cc-opt="$CFLAGS" \
+\
+# build
+	&& make -j$(getconf _NPROCESSORS_ONLN) \
 	&& find . -type f -a -name 'nginx' -o -name '*.so*' | xargs strip \
 	&& make install \
-	&& mkdir -p /usr/lib/systemd/system  \
+	&& mkdir -p /usr/lib/nginx/modules \
+	&& (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
+	&& apk add --no-cache --virtual .gettext gettext \
+\
+	#&& mv /usr/bin/envsubst /tmp/ \
+	&& runDeps="$( \
+		scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst \
+			| tr ',' '\n' \
+			| sort -u \
+			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
+	)" \
+\
+	#&& apk del --virtual .gettext \
+	#&& mv /usr/bin/envsubst /tmp/ \
+	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
+	&& (strip /usr/sbin/nginx /usr/lib/nginx/modules/*.so; true) \
+	&& (chmod 755 /usr/lib/nginx/modules/*.so; true) \
+	&& apk del --purge --virtual .builddep \
+	&& mkdir -p -m755 /usr/lib/systemd/system  \
 		/etc/nginx/conf.d \
 		/var/cache/nginx  \
 		/var/log/nginx  \
 		/usr/share/nginx/html \
+	&& install -m644 /tmp/build/nginx.conf /etc/nginx/nginx.conf \
+	&& install -m644 /tmp/build/nginx_httpd.conf /etc/nginx/conf.d/_http.conf \
+	&& install -m644 /tmp/build/nginx_ssl.conf /etc/nginx/conf.d/_ssl.conf \
+	&& install -m644 /etc/nginx/html/50x.html /usr/share/nginx/html \
+	&& install -m644 /etc/nginx/html/index.html /usr/share/nginx/html \
+	&& mkdir -p -m755 /etc/nginx/naxsi.d \
 	&& cd /tmp/build/nginx-${KUSANAGI_NGINX_VERSION}/ \
-	&& cp /tmp/build/nginx.conf /etc/nginx/nginx.conf \
-	&& cp /tmp/build/nginx_httpd.conf /etc/nginx/conf.d/_http.conf \
-	&& cp /tmp/build/nginx_ssl.conf /etc/nginx/conf.d/_ssl.conf \
-	&& cp /etc/nginx/html/50x.html /usr/share/nginx/html \
-	&& cp /etc/nginx/html/index.html /usr/share/nginx/html \
-	&& mkdir -p /etc/nginx/naxsi.d \
-	&& cp extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
-	&& (cd /etc/nginx/; tar xf /tmp/build/naxsi.d.tar.gz) \
-	&& cp /tmp/build/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf \
-	&& cp /tmp/build/security.conf /etc/nginx/conf.d/security.conf \
+	&& install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
+	&& cd /etc/nginx/ \
+	&& tar xf /tmp/build/naxsi.d.tar.gz \
+	&& install -m644 /tmp/build/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf \
+	&& install -m644 /tmp/build/security.conf /etc/nginx/conf.d/security.conf \
+	\
+	# forward request and error logs to docker log collector
+	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
+	&& ln -sf /dev/stdout /var/log/nginx/access.log \
+	&& ln -sf /dev/stderr /var/log/nginx/error.log \
+	&& apk add --no-cache tzdata \
 	&& cd / \
-	&& : # END OF RUN
-	#&& rm -rf /tmp/build \
-	#&& apk del --purge $DEP \
+	&& rm -rf /tmp/build \
+	&& : # END of RUN
 
+USER httpd
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
