@@ -46,7 +46,6 @@ COPY files/nginx_ssl.conf /tmp/build
 COPY files/naxsi.d.tar.gz /tmp/build
 COPY files/kusanagi_naxsi_core.conf /tmp/build
 COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
-COPY files/naxsi-stringop-overflow.patch /tmp/build
 COPY files/security.conf /tmp/build
 
 	# prep
