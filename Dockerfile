@@ -232,5 +232,16 @@ RUN : \
 	&& rm -rf /tmp/build \
 	&& : # END of RUN
 
+ARG MICROSCANER_TOKEN
+RUN if [ x${MICROSCANER_TOKEN} != x ] ; then \
+	apk add --no-cache --virtual .ca ca-certificates \
+	&& update-ca-certificates\
+	&& wget --no-check-certificate https://get.aquasec.com/microscanner \
+	&& chmod +x microscanner \
+	&& ./microscanner ${MICROSCANER_TOKEN} || exit 1\
+	&& rm ./microscanner \
+	&& apk del --purge --virtual .ca ;\
+    fi
+
 USER httpd
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
