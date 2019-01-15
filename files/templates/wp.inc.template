@@ -1,0 +1,41 @@
+# WordPress template
+index index.php index.html index.htm;
+
+rewrite /wp-admin$ $scheme://$host$uri/ permanent;
+
+location / {
+    try_files $uri $uri/ /index.php?$args;
+}
+
+location ~* /\. {
+    deny all;
+}
+
+location ~* /(?:uploads|files)/.*\.php$ {
+    deny all;
+}
+
+location ~* /wp-login\.php|/wp-admin/((?!(admin-ajax\.php|images/)).)*$ {
+    satisfy any;
+    allow 0.0.0.0/0;
+    allow 127.0.0.1;
+    deny all;
+    auth_basic "basic authentication";
+    auth_basic_user_file  "/home/kusanagi/.htpasswd";
+
+    location ~ [^/]\.php(/|$) {
+        include /etc/nginx/conf.d/fastcgi.inc;
+        ${NO_USE_NAXSI_WP}include naxsi.d/wordpress/*.conf;
+    }
+    include conf.d/ssl_st.inc;
+    ${NO_USE_NAXSI_WP}include naxsi.d/wordpress/*.conf;
+}
+
+location ~ [^/]\.php(/|$) {
+    include conf.d/fastcgi.inc;
+    include conf.d/fastcgi_cache.inc;
+
+    add_header X-Signature KUSANAGI;
+    include conf.d/ssl_st.inc;
+    ${NO_USE_NAXSI}include naxsi.d/wordpress/*.conf;
+}

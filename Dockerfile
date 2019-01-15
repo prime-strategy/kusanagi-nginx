@@ -5,7 +5,7 @@
 FROM alpine:edge
 MAINTAINER s-miyaza@myzkstr.com
 
-ENV KUSANAGI_NGINX_VERSION	1.15.7
+ENV KUSANAGI_NGINX_VERSION	1.15.8
 ENV KUSANAGI_LIBBROTLI_VERSION	1.0pre1-2
 ENV KUSANAGI_OPENSSL_VERSION	1.1.1a-r0
 ENV KUSANAGI_SSLCONIG_VERSION	master
@@ -30,25 +30,29 @@ ENV LUAJIT_INC /usr/include/luajit-$LUA_VERSION
 
 # add user
 RUN : \
-	&& apk update && apk upgrade \
-	&& addgroup -g 1001 www \
-	&& addgroup -g 1000 kusanagi \
-	&& adduser -h /home/httpd -s /bin/nologin -g www -D -H httpd \
-	&& adduser -h /home/kusanagi -s /bin/bash -G kusanagi -G www -u 1000 -D kusanagi \
-	&& chmod 755 /home/kusanagi \
-	&& mkdir /tmp/build \
-	&& : # END of RUN
+        && apk update \
+        && apk upgrade \
+        && apk add --no-cache --virtual .user shadow \
+        && groupadd -g 1001 www \
+        && useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
+        && groupadd -g 1000 kusanagi \
+        && useradd -d /home/kusanagi -s /bin/nologin -g kusanagi -G www -u 1000 -m kusanagi \
+        && chmod 755 /home/kusanagi \
+        && apk del --purge .user \
+        && mkdir /tmp/build \
+        && : # END of RUN
 
 COPY files/nginx.conf /tmp/build
 COPY files/logrotate.d_nginx /tmp/build
 COPY files/nginx_httpd.conf /tmp/build
 COPY files/nginx_ssl.conf /tmp/build
-COPY files/naxsi.d.tar.gz /tmp/build
 COPY files/kusanagi_naxsi_core.conf /tmp/build
 COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/security.conf /tmp/build
+ADD  files/naxsi.d /tmp/build/naxsi.d/
+ADD  files/templates /tmp/build/templates/
 
-	# prep
+# prep
 RUN : \
 \
 	# add build pkg
@@ -190,8 +194,7 @@ RUN : \
 	&& mkdir -p /usr/lib/nginx/modules \
 	&& (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
 	&& apk add --no-cache --virtual .gettext gettext \
-\
-	#&& mv /usr/bin/envsubst /tmp/ \
+	&& mv /usr/bin/envsubst /tmp/ \
 	&& runDeps="$( \
 		scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst \
 			| tr ',' '\n' \
@@ -199,8 +202,8 @@ RUN : \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)" \
 \
-	#&& apk del --virtual .gettext \
-	#&& mv /usr/bin/envsubst /tmp/ \
+	&& apk del --virtual .gettext \
+	&& mv /tmp/envsubst /usr/bin/envsubst \
 	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
 	&& (strip /usr/sbin/nginx /usr/lib/nginx/modules/*.so; true) \
 	&& (chmod 755 /usr/lib/nginx/modules/*.so; true) \
@@ -209,17 +212,20 @@ RUN : \
 		/etc/nginx/conf.d \
 		/var/cache/nginx  \
 		/var/log/nginx  \
-		/usr/share/nginx/html \
+		/usr/share/html/.well-known \
+	&& chown -R httpd:www /etc/nginx /usr/share/html \
 	&& install -m644 /tmp/build/nginx.conf /etc/nginx/nginx.conf \
 	&& install -m644 /tmp/build/nginx_httpd.conf /etc/nginx/conf.d/_http.conf \
 	&& install -m644 /tmp/build/nginx_ssl.conf /etc/nginx/conf.d/_ssl.conf \
 	&& install -m644 /etc/nginx/html/50x.html /usr/share/nginx/html \
 	&& install -m644 /etc/nginx/html/index.html /usr/share/nginx/html \
-	&& mkdir -p -m755 /etc/nginx/naxsi.d \
+	&& mkdir -p -m755 /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
 	&& cd /tmp/build/nginx-${KUSANAGI_NGINX_VERSION}/ \
 	&& install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
 	&& cd /etc/nginx/ \
-	&& tar xf /tmp/build/naxsi.d.tar.gz \
+	&& cp -r /tmp/build/naxsi.d /etc/nginx \
+	&& cp /tmp/build/templates/*.inc /etc/nginx/conf.d \
+	&& cp /tmp/build/templates/*.template /etc/nginx/conf.d/templates/ \
 	&& install -m644 /tmp/build/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf \
 	&& install -m644 /tmp/build/security.conf /etc/nginx/conf.d/security.conf \
 	\
@@ -243,5 +249,14 @@ RUN if [ x${MICROSCANER_TOKEN} != x ] ; then \
 	&& apk del --purge --virtual .ca ;\
     fi
 
+EXPOSE 80
+EXPOSE 443
+
+VOLUME /home/kusanagi
+VOLUME /etc/nginx/conf.d
+VOLUME /etc/letsencrypt
+
 USER httpd
+COPY files/docker-entrypoint.sh /
+ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
