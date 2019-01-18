@@ -42,15 +42,7 @@ RUN : \
         && mkdir /tmp/build \
         && : # END of RUN
 
-COPY files/nginx.conf /tmp/build
-COPY files/logrotate.d_nginx /tmp/build
-COPY files/nginx_httpd.conf /tmp/build
-COPY files/nginx_ssl.conf /tmp/build
-COPY files/kusanagi_naxsi_core.conf /tmp/build
 COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
-COPY files/security.conf /tmp/build
-ADD  files/naxsi.d /tmp/build/naxsi.d/
-ADD  files/templates /tmp/build/templates/
 
 # prep
 RUN : \
@@ -208,35 +200,38 @@ RUN : \
 	&& (strip /usr/sbin/nginx /usr/lib/nginx/modules/*.so; true) \
 	&& (chmod 755 /usr/lib/nginx/modules/*.so; true) \
 	&& apk del --purge --virtual .builddep \
-	&& mkdir -p -m755 /usr/lib/systemd/system  \
+	&& mkdir -p -m755 /usr/share/nginx/html \
+		/etc/kusanagi.d/.well-known \
 		/etc/nginx/conf.d \
 		/var/cache/nginx  \
 		/var/log/nginx  \
-		/usr/share/html/.well-known \
-	&& chown -R httpd:www /etc/nginx /usr/share/html \
-	&& install -m644 /tmp/build/nginx.conf /etc/nginx/nginx.conf \
-	&& install -m644 /tmp/build/nginx_httpd.conf /etc/nginx/conf.d/_http.conf \
-	&& install -m644 /tmp/build/nginx_ssl.conf /etc/nginx/conf.d/_ssl.conf \
+	&& chown -R httpd:www /etc/nginx \
+		/usr/share/nginx \
+		/var/cache/nginx \
+		/var/log/nginx \
 	&& install -m644 /etc/nginx/html/50x.html /usr/share/nginx/html \
 	&& install -m644 /etc/nginx/html/index.html /usr/share/nginx/html \
 	&& mkdir -p -m755 /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
 	&& cd /tmp/build/nginx-${KUSANAGI_NGINX_VERSION}/ \
 	&& install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
 	&& cd /etc/nginx/ \
-	&& cp -r /tmp/build/naxsi.d /etc/nginx \
-	&& cp /tmp/build/templates/*.inc /etc/nginx/conf.d \
-	&& cp /tmp/build/templates/*.template /etc/nginx/conf.d/templates/ \
-	&& install -m644 /tmp/build/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf \
-	&& install -m644 /tmp/build/security.conf /etc/nginx/conf.d/security.conf \
 	\
 	# forward request and error logs to docker log collector
 	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
 	&& ln -sf /dev/stdout /var/log/nginx/access.log \
 	&& ln -sf /dev/stderr /var/log/nginx/error.log \
-	&& apk add --no-cache tzdata \
+	&& apk add --no-cache tzdata openssl \
 	&& cd / \
 	&& rm -rf /tmp/build \
 	&& : # END of RUN
+
+COPY files/nginx.conf /etc/nginx/nginx.conf
+COPY files/nginx_httpd.conf /etc/nginx/conf.d/_nginx.conf
+COPY files/nginx_ssl.conf /etc/nginx/conf.d/_ssl.conf
+COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
+COPY files/naxsi.d/ /etc/nginx/naxsi.d/
+COPY files/templates/ /etc/nginx/conf.d/
+COPY files/security.conf /etc/nginx/conf.d/security.conf
 
 ARG MICROSCANER_TOKEN
 RUN if [ x${MICROSCANER_TOKEN} != x ] ; then \
@@ -253,10 +248,8 @@ EXPOSE 80
 EXPOSE 443
 
 VOLUME /home/kusanagi
-VOLUME /etc/nginx/conf.d
 VOLUME /etc/letsencrypt
 
-USER httpd
 COPY files/docker-entrypoint.sh /
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]

@@ -3,10 +3,9 @@
 #---------------------------------------
 
 server {
-    listen 127.0.0.1:80;
-    listen [::1]:80;
+    listen 80;
     
-    server_name $FQDN
+    server_name ${FQDN};
     ${NO_SSL_REDIRECT}rewrite ^(.*)$ https://${FQDN}$request_uri permanent; # SSL ONLY
 
     set $do_not_cache 1; ## page cache
@@ -23,12 +22,10 @@ server {
     include conf.d/static.inc;
     
     include conf.d/${KUSANAGI_PROVISION}.inc;
-    include conf.d/rails.inc;
 }
 
 server {
-    listen 127.0.0.1:443 ssl http2;
-    listen [::1]:443 ssl http2;
+    listen 443 ssl http2;
     server_name ${FQDN};
 
     set $do_not_cache ${DONOT_USE_FCACHE}; ## page cache
@@ -37,7 +34,7 @@ server {
     ssl_certificate     ${SSL_CERT};
     ssl_certificate_key ${SSL_KEY};
     ssl_ct ${USE_SSL_CT};
-    ssl_ct_static_scts /etc/pki/tls/certs/scts;
+    ssl_ct_static_scts /etc/nginx/scts;
     
     include conf.d/ssl.inc;
     ## OCSP stapling

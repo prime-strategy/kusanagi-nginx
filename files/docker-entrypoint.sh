@@ -1,14 +1,16 @@
-#!
+#!/bin/sh
 
 #//---------------------------------------------------------------------------
 #// generate nginx configuration file
 #//---------------------------------------------------------------------------
+[ "x$SSL_CERT" -a -f $SSL_CERT ] || unset SSL_CERT
+[ "x$SSL_KEY" -a -f $SSL_KEY ] || unset SSL_KEY
 cd /etc/nginx/conf.d \
 && env FQDN=${FQDN?FQDN} \
     DOCUMENTROOT=${DOCUMENTROOT?DOCUMENTROOT} \
     KUSANAGI_PROVISION=${KUSANAGI_PROVISION?KUSANGI_PROVISION} \
     NO_SSL_REDIRECT=${NO_SSL_REDIRECT:+#} \
-    DONOT_USE_FCACHE=${DONOT_USE_FCACHE:-1} \
+    DONOT_USE_FCACHE=${DONOT_USE_FCACHE:-0} \
     EXPIRE_DAYS=${EXPIRE_DAYS:-90} \
     USE_SSL_CT=${USE_SSL_CT:-off} \
     USE_SSL_ST=${USE_SSL_ST:-off} \
@@ -21,18 +23,21 @@ cd /etc/nginx/conf.d \
     < default.conf.template > default.conf \
 || exit 1
 
+env PHPHOST=${PHPHOST:-127.0.0.1} envsubst '$$PHPHOST' \
+    < fastcgi.inc.template > fastcgi.inc
 if [ "$KUSANAGI_PROVISION" == "wp" ] ; then
-   env NO_USE_NAXSI=${NO_USE_NAXSI_WP:+#} envsubst '$$NO_USE_NAXSI' \
-   < wp.inc.template > wp.inc 
+    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} envsubst '$$NO_USE_NAXSI' \
+    < wp.inc.template > wp.inc 
 elif  [ "$KUSANAGI_PROVISION" == "lamp" ] ; then
-   env NO_USE_NAXSI=${NO_USE_NAXSI_WP:+#} envsubst '$$NO_USE_NAXSI' \
-   < lamp.inc.template > lamp.inc 
+    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} envsubst '$$NO_USE_NAXSI' \
+    < lamp.inc.template > lamp.inc 
 elif  [ "$KUSANAGI_PROVISION" == "rails" ] ; then
-    env ENV_SECRET_KEY_BASE=${ENV_SECRET_KEY_BASE} \
+    env ENV_SECRET_KEY_BASE=${ENV_SECRET_KEY_BASE?ENV_SECRET_KEY_BASE} \
     RAILS_ENV=${RAILS_ENV:-development} \
     NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
     envsubst '$$ENV_SECRET_KEY_BASE $$ENV_SECRET_KEY_BASE
-    $$RAILS_ENV $$NO_USE_NAXSI_WP' < rails.inc.template > rails.inc
+    $$RAILS_ENV $$NO_USE_NAXSI' < rails.inc.template > rails.inc \
+   || exit 1
 fi
 
 #//---------------------------------------------------------------------------
@@ -41,10 +46,10 @@ fi
 if [ -f /etc/nginx/localhost.key -o -f /etc/nginx/localhost.crt ]; then
 	/bin/true
 else
-	/usr/bin/openssl genrsa -rand /proc/apm:/proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/pci:/proc/rtc:/proc/uptime 2048 > /etc/nginx/localhost.key 2> /dev/null
+	/usr/bin/openssl genrsa -rand /proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime 2048 > /etc/nginx/localhost.key 2> /dev/null
 
-	cat <<-EOF | /usr/bin/openssl req -new -key /etc/pki/tls/private/localhost.key \
-		-x509 -sha256 -days 365 -set_serial $RANDOM -extensions v3_req \
+	cat <<-EOF | /usr/bin/openssl req -new -key /etc/nginx/localhost.key \
+		-x509 -sha256 -days 365 -set_serial 1 -extensions v3_req \
 		-out /etc/nginx/localhost.crt 2>/dev/null
 --
 SomeState
@@ -60,14 +65,14 @@ fi
 #// Improv security
 #//---------------------------------------------------------------------------
 # Improv Sec
-iif [ ! -e /etc/nginx/ssl_sess_ticket.key ] ; then
+if [ ! -e /etc/nginx/ssl_sess_ticket.key ] ; then
 	openssl rand 48 > /etc/nginx/ssl_sess_ticket.key
 fi
 if [ ! -e /etc/nginx/dhparam.key ] ; then
 	openssl dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
 fi
 
-
+echo 127.0.0.1 $FQDN >> /etc/hosts
 
 #//---------------------------------------------------------------------------
 #// execute nginx

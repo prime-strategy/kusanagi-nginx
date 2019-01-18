@@ -25,10 +25,10 @@ location ~* /wp-login\.php|/wp-admin/((?!(admin-ajax\.php|images/)).)*$ {
 
     location ~ [^/]\.php(/|$) {
         include /etc/nginx/conf.d/fastcgi.inc;
-        ${NO_USE_NAXSI_WP}include naxsi.d/wordpress/*.conf;
+        ${NO_USE_NAXSI}include naxsi.d/wordpress/*.conf;
     }
     include conf.d/ssl_st.inc;
-    ${NO_USE_NAXSI_WP}include naxsi.d/wordpress/*.conf;
+    ${NO_USE_NAXSI}include naxsi.d/wordpress/*.conf;
 }
 
 location ~ [^/]\.php(/|$) {
