@@ -1,10 +1,31 @@
 #!/bin/sh
 
+function env2cert {
+    file=$1
+    var="$2"
+    (echo "$var" | sed 's/"//g' | grep '^-----' > /dev/null) && 
+    (echo "$var" | sed -e 's/"//g' -e 's/\r//g' | sed -e 's/- /-\n/' -e 's/ -/\n-/' | sed -e '2s/ /\n/g' > $file) && 
+    echo -n $file || echo -n
+}
+
+[ "x$SSL_CERT" != "x" -a ! -f "$SSL_CERT" ] && SSL_CERT=$(env2cert /etc/nginx/default.pem "$SSL_CERT")
+[ "x$SSL_KEY" != "x" -a ! -f "$SSL_KEY" ] && SSL_KEY=$(env2cert /etc/nginx/default.key "$SSL_KEY")
+
+#//---------------------------------------------------------------------------
+#// Improv security
+#//---------------------------------------------------------------------------
+# Improv Sec
+if [ ! -e /etc/nginx/ssl_sess_ticket.key ] ; then
+	openssl rand 48 > /etc/nginx/ssl_sess_ticket.key
+fi
+if [ ! -e /etc/nginx/dhparam.key ] ; then
+    env2cert /etc/nginx/dhparam.key "$SSL_DHPARAM" > /dev/null
+    test -f /etc/nginx/dhparam.key || openssl dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
+fi
+
 #//---------------------------------------------------------------------------
 #// generate nginx configuration file
 #//---------------------------------------------------------------------------
-[ "x$SSL_CERT" -a -f $SSL_CERT ] || unset SSL_CERT
-[ "x$SSL_KEY" -a -f $SSL_KEY ] || unset SSL_KEY
 cd /etc/nginx/conf.d \
 && env FQDN=${FQDN?FQDN} \
     DOCUMENTROOT=${DOCUMENTROOT?DOCUMENTROOT} \
@@ -59,17 +80,6 @@ SomeOrganizationalUnit
 ${FQDN}
 root@${FQDN}
 	EOF
-fi
-
-#//---------------------------------------------------------------------------
-#// Improv security
-#//---------------------------------------------------------------------------
-# Improv Sec
-if [ ! -e /etc/nginx/ssl_sess_ticket.key ] ; then
-	openssl rand 48 > /etc/nginx/ssl_sess_ticket.key
-fi
-if [ ! -e /etc/nginx/dhparam.key ] ; then
-	openssl dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
 fi
 
 echo 127.0.0.1 $FQDN >> /etc/hosts
