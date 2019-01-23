@@ -47,17 +47,22 @@ cd /etc/nginx/conf.d \
 env PHPHOST=${PHPHOST:-127.0.0.1} envsubst '$$PHPHOST' \
     < fastcgi.inc.template > fastcgi.inc
 if [ "$KUSANAGI_PROVISION" == "wp" ] ; then
-    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} envsubst '$$NO_USE_NAXSI' \
+    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+	envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
     < wp.inc.template > wp.inc 
 elif  [ "$KUSANAGI_PROVISION" == "lamp" ] ; then
-    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} envsubst '$$NO_USE_NAXSI' \
+    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+	envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
     < lamp.inc.template > lamp.inc 
 elif  [ "$KUSANAGI_PROVISION" == "rails" ] ; then
     env ENV_SECRET_KEY_BASE=${ENV_SECRET_KEY_BASE?ENV_SECRET_KEY_BASE} \
-    RAILS_ENV=${RAILS_ENV:-development} \
-    NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
-    envsubst '$$ENV_SECRET_KEY_BASE $$ENV_SECRET_KEY_BASE
-    $$RAILS_ENV $$NO_USE_NAXSI' < rails.inc.template > rails.inc \
+        RAILS_ENV=${RAILS_ENV:-development} \
+        NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+        envsubst '$$ENV_SECRET_KEY_BASE $$ENV_SECRET_KEY_BASE
+        $$RAILS_ENV $$NO_USE_NAXSI $$NO_USE_SSLST' < rails.inc.template > rails.inc \
    || exit 1
 fi
 

@@ -27,7 +27,7 @@ location ~* /wp-login\.php|/wp-admin/((?!(admin-ajax\.php|images/)).)*$ {
         include /etc/nginx/conf.d/fastcgi.inc;
         ${NO_USE_NAXSI}include naxsi.d/wordpress/*.conf;
     }
-    include conf.d/ssl_st.inc;
+    ${NO_USE_SSLST}include conf.d/ssl_st.inc;
     ${NO_USE_NAXSI}include naxsi.d/wordpress/*.conf;
 }
 
@@ -36,6 +36,6 @@ location ~ [^/]\.php(/|$) {
     include conf.d/fastcgi_cache.inc;
 
     add_header X-Signature KUSANAGI;
-    include conf.d/ssl_st.inc;
+    ${NO_USE_SSLST}include conf.d/ssl_st.inc;
     ${NO_USE_NAXSI}include naxsi.d/wordpress/*.conf;
 }

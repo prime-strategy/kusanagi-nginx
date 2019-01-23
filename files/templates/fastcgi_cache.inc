@@ -1,5 +1,6 @@
 # FASTCGI cache
 fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+set $device "pc";
 
 if ($request_method = POST) {
     set $do_not_cache 1;

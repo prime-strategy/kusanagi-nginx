@@ -1,0 +1,19 @@
+# WordPress template
+index index.php index.html index.htm;
+
+location / {
+    try_files $uri $uri/ /index.php?$args;
+}
+
+location ~* /\. {
+    deny all;
+}
+
+location ~ [^/]\.php(/|$) {
+    include conf.d/fastcgi.inc;
+    include conf.d/fastcgi_cache.inc;
+
+    add_header X-Signature KUSANAGI;
+    ${NO_USE_SSLST}include conf.d/ssl_st.inc;
+    ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
+}

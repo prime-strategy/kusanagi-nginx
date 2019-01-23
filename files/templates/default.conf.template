@@ -8,9 +8,8 @@ server {
     server_name ${FQDN};
     ${NO_SSL_REDIRECT}rewrite ^(.*)$ https://${FQDN}$request_uri permanent; # SSL ONLY
 
-    set $do_not_cache 1; ## page cache
+    set $do_not_cache ${DONOT_USE_FCACHE};; ## page cache
     set $expire_days ${EXPIRE_DAYS};
-    set $use_ssl_st 0;
     
     charset UTF-8;
     client_max_body_size 16M;
