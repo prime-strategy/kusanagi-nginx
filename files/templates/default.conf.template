@@ -8,7 +8,7 @@ server {
     server_name ${FQDN};
     ${NO_SSL_REDIRECT}rewrite ^(.*)$ https://${FQDN}$request_uri permanent; # SSL ONLY
 
-    set $do_not_cache ${DONOT_USE_FCACHE};; ## page cache
+    set $do_not_cache ${DONOT_USE_FCACHE}; ## page cache
     set $expire_days ${EXPIRE_DAYS};
     
     charset UTF-8;
