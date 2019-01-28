@@ -233,13 +233,13 @@ COPY files/naxsi.d/ /etc/nginx/naxsi.d/
 COPY files/templates/ /etc/nginx/conf.d/
 COPY files/security.conf /etc/nginx/conf.d/security.conf
 
-ARG MICROSCANER_TOKEN
-RUN if [ x${MICROSCANER_TOKEN} != x ] ; then \
+ARG MICROSCANNER_TOKEN
+RUN if [ x${MICROSCANNER_TOKEN} != x ] ; then \
 	apk add --no-cache --virtual .ca ca-certificates \
 	&& update-ca-certificates\
 	&& wget --no-check-certificate https://get.aquasec.com/microscanner \
 	&& chmod +x microscanner \
-	&& ./microscanner ${MICROSCANER_TOKEN} || exit 1\
+	&& ./microscanner ${MICROSCANNER_TOKEN} || exit 1\
 	&& rm ./microscanner \
 	&& apk del --purge --virtual .ca ;\
     fi
