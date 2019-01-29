@@ -27,6 +27,7 @@ ENV lua_nginx_module_name lua-nginx-module
 ENV lua_nginx_module_version 0.10.13
 ENV LUAJIT_LIB /usr/lib
 ENV LUAJIT_INC /usr/include/luajit-$LUA_VERSION
+ENV CT_SUBMIT_VERSION 1.1.2
 
 # add user
 RUN : \
@@ -52,7 +53,6 @@ RUN : \
 		gcc \
 		g++ \
 		make \
-		libc-dev \
 		autoconf \
 		automake \
 		patch \
@@ -79,6 +79,7 @@ RUN : \
 		ruby-dev \
 		libxpm-dev \
 		fontconfig-dev \
+		go \
 	&& cd /tmp/build \
 	&& wget http://nginx.org/download/nginx-${KUSANAGI_NGINX_VERSION}.tar.gz \
 	&& tar xf nginx-${KUSANAGI_NGINX_VERSION}.tar.gz \
@@ -187,19 +188,29 @@ RUN : \
 	&& (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
 	&& apk add --no-cache --virtual .gettext gettext \
 	&& mv /usr/bin/envsubst /tmp/ \
+\
+# add ct-submit
+	&& curl -LO https://raw.githubusercontent.com/grahamedgecombe/ct-submit/v${CT_SUBMIT_VERSION}/ct-submit.go \
+	&& go build ct-submit.go \
+	&& cp ct-submit /tmp \
+\
+# remove pkg
 	&& runDeps="$( \
-		scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst \
+		scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst /tmp/ct-submit \
 			| tr ',' '\n' \
 			| sort -u \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)" \
-\
 	&& apk del --virtual .gettext \
 	&& mv /tmp/envsubst /usr/bin/envsubst \
+	&& mv /tmp/ct-submit /usr/bin/ct-submit \
+	&& chmod 700 /usr/bin/ct-submit \
 	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
 	&& (strip /usr/sbin/nginx /usr/lib/nginx/modules/*.so; true) \
 	&& (chmod 755 /usr/lib/nginx/modules/*.so; true) \
 	&& apk del --purge --virtual .builddep \
+\
+# setup configures
 	&& mkdir -p -m755 /usr/share/nginx/html \
 		/etc/kusanagi.d/.well-known \
 		/etc/nginx/conf.d \
@@ -214,13 +225,6 @@ RUN : \
 	&& mkdir -p -m755 /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
 	&& cd /tmp/build/nginx-${KUSANAGI_NGINX_VERSION}/ \
 	&& install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
-	&& cd /etc/nginx/ \
-	\
-	# forward request and error logs to docker log collector
-	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
-	&& ln -sf /dev/stdout /var/log/nginx/access.log \
-	&& ln -sf /dev/stderr /var/log/nginx/error.log \
-	&& apk add --no-cache tzdata openssl \
 	&& cd / \
 	&& rm -rf /tmp/build \
 	&& : # END of RUN
@@ -232,6 +236,16 @@ COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
 COPY files/naxsi.d/ /etc/nginx/naxsi.d/
 COPY files/templates/ /etc/nginx/conf.d/
 COPY files/security.conf /etc/nginx/conf.d/security.conf
+COPY files/ct-submit.sh /usr/bin/ct-submit.sh
+
+# forward request and error logs to docker log collector
+RUN cd /etc/nginx/ \
+	&& chmod 700 /usr/bin/ct-submit.sh \
+	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
+	&& ln -sf /dev/stdout /var/log/nginx/access.log \
+	&& ln -sf /dev/stderr /var/log/nginx/error.log \
+	&& apk add --no-cache tzdata openssl \
+	&& : # END of RUN
 
 ARG MICROSCANNER_TOKEN
 RUN if [ x${MICROSCANNER_TOKEN} != x ] ; then \
