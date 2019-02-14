@@ -7,4 +7,4 @@ else
     BUILDARGS="-f $DOCKERFILE_PATH"
 fi
 
-docker build --build-arg MICROSCANNER_TOKEN=ZjNmOTA5OTRhZTlk $BUILDARGS -t $IMAGE_NAME .
+docker build $BUILDARGS -t $IMAGE_NAME .
