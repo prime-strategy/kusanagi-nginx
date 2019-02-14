@@ -86,7 +86,7 @@ root@${FQDN}
 	EOF
 fi
 
-echo 127.0.0.1 $FQDN >> /etc/hosts
+#echo 127.0.0.1 $FQDN >> /etc/hosts
 
 #//---------------------------------------------------------------------------
 #// execute nginx

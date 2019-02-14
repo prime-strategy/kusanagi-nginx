@@ -1,9 +1,8 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI C2D (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-#FROM alpine:3.8
-FROM alpine:edge
-MAINTAINER s-miyaza@myzkstr.com
+FROM alpine:3.9
+MAINTAINER kusanagi@prime-strategy.co.jp
 
 ENV KUSANAGI_NGINX_VERSION	1.15.8
 ENV KUSANAGI_LIBBROTLI_VERSION	1.0pre1-2
@@ -211,17 +210,17 @@ RUN : \
 	&& apk del --purge --virtual .builddep \
 \
 # setup configures
-	&& mkdir -p -m755 /usr/share/nginx/html \
-		/etc/kusanagi.d/.well-known \
+	&& mkdir -p -m755 /var/www/html \
 		/etc/nginx/conf.d \
 		/var/cache/nginx  \
 		/var/log/nginx  \
 	&& chown -R httpd:www /etc/nginx \
-		/usr/share/nginx \
+		/var/www/html \
 		/var/cache/nginx \
 		/var/log/nginx \
-	&& install -m644 /etc/nginx/html/50x.html /usr/share/nginx/html \
-	&& install -m644 /etc/nginx/html/index.html /usr/share/nginx/html \
+		/etc/hosts \
+	&& install -m644 /etc/nginx/html/50x.html /var/www/html \
+	&& install -m644 /etc/nginx/html/index.html /var/www/html \
 	&& mkdir -p -m755 /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
 	&& cd /tmp/build/nginx-${KUSANAGI_NGINX_VERSION}/ \
 	&& install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
@@ -258,12 +257,13 @@ RUN if [ x${MICROSCANNER_TOKEN} != x ] ; then \
 	&& apk del --purge --virtual .ca ;\
     fi
 
-EXPOSE 80
-EXPOSE 443
+EXPOSE 8080
+EXPOSE 8443
 
 VOLUME /home/kusanagi
 VOLUME /etc/letsencrypt
 
+USER httpd
 COPY files/docker-entrypoint.sh /
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]

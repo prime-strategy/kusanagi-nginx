@@ -3,7 +3,7 @@
 #---------------------------------------
 
 server {
-    listen 80;
+    listen 8080;
     
     server_name ${FQDN};
     ${NO_SSL_REDIRECT}rewrite ^(.*)$ https://${FQDN}$request_uri permanent; # SSL ONLY
@@ -24,7 +24,7 @@ server {
 }
 
 server {
-    listen 443 ssl http2;
+    listen 8443 ssl http2;
     server_name ${FQDN};
 
     set $do_not_cache ${DONOT_USE_FCACHE}; ## page cache
