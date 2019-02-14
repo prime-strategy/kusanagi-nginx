@@ -4,11 +4,7 @@ set -eu
 if [ "$DOCKERFILE_PATH" = "" ]; then
     BUILDARGS=""
 else
-    echo $DOCKERFILE_PATH|grep : >/dev/null && \
-     BUILDARGS=$(echo $DOCKERFILE_PATH | \
-     awk -F: '{for( i=1; i< NF; i++) { print "--build-arg", $i };
-	       	print " -f",$NF }') ||\
-     BUILDARGS="-f $DOCKERFILE_PATH"
+    BUILDARGS="-f $DOCKERFILE_PATH"
 fi
 
-docker build $BUILDARGS -t $IMAGE_NAME .
+docker build --build-arg MICROSCANNER_TOKEN=ZjNmOTA5OTRhZTlk $BUILDARGS -t $IMAGE_NAME .
