@@ -1,0 +1,57 @@
+#=======================================
+# ${FQDN}
+#---------------------------------------
+
+server {
+    listen 8080;
+    
+    server_name ${FQDN};
+    ${NO_SSL_REDIRECT}rewrite ^(.*)$ https://${FQDN}$request_uri permanent; # SSL ONLY
+
+    set $do_not_cache ${DONOT_USE_FCACHE}; ## page cache
+    set $expire_days ${EXPIRE_DAYS};
+    
+    charset UTF-8;
+    client_max_body_size 16M;
+    root ${DOCUMENTROOT};
+
+    include conf.d/505.inc;
+    include conf.d/favicon.inc;
+    include conf.d/acme.inc;
+    include conf.d/static.inc;
+    
+    include conf.d/${KUSANAGI_PROVISION}.inc;
+}
+
+server {
+    listen 8443 ssl http2;
+    server_name ${FQDN};
+
+    set $do_not_cache ${DONOT_USE_FCACHE}; ## page cache
+    set $expire_days ${EXPIRE_DAYS};
+    
+    ssl_certificate     ${SSL_CERT};
+    ssl_certificate_key ${SSL_KEY};
+    ssl_ct ${USE_SSL_CT};
+    ssl_ct_static_scts /etc/nginx/scts;
+    
+    include conf.d/ssl.inc;
+    ## OCSP stapling
+    ssl_stapling ${USE_SSL_OSCP};
+    ssl_stapling_verify ${USE_SSL_OSCP};
+    resolver ${OSCP_RESOLV} 8.8.4.4 8.8.8.8 valid=300s;
+    resolver_timeout 10s;
+
+    charset UTF-8;
+    client_max_body_size 16M;
+    root  ${DOCUMENTROOT};
+
+    include conf.d/505.inc;
+    include conf.d/favicon.inc;
+    include conf.d/acme.inc;
+    include conf.d/static.inc;
+
+    include conf.d/${KUSANAGI_PROVISION}.inc;
+    include conf.d/fcache_purge.inc;
+}
+

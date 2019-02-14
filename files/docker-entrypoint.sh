@@ -1,16 +1,81 @@
 #!/bin/sh
 
+function env2cert {
+    file=$1
+    var="$2"
+    (echo "$var" | sed 's/"//g' | grep '^-----' > /dev/null) && 
+    (echo "$var" | sed -e 's/"//g' -e 's/\r//g' | sed -e 's/- /-\n/' -e 's/ -/\n-/' | sed -e '2s/ /\n/g' > $file) && 
+    echo -n $file || echo -n
+}
+
+[ "x$SSL_CERT" != "x" -a ! -f "$SSL_CERT" ] && SSL_CERT=$(env2cert /etc/nginx/default.pem "$SSL_CERT")
+[ "x$SSL_KEY" != "x" -a ! -f "$SSL_KEY" ] && SSL_KEY=$(env2cert /etc/nginx/default.key "$SSL_KEY")
+
+#//---------------------------------------------------------------------------
+#// Improv security
+#//---------------------------------------------------------------------------
+# Improv Sec
+if [ ! -e /etc/nginx/ssl_sess_ticket.key ] ; then
+	openssl rand 48 > /etc/nginx/ssl_sess_ticket.key
+fi
+if [ ! -e /etc/nginx/dhparam.key ] ; then
+    env2cert /etc/nginx/dhparam.key "$SSL_DHPARAM" > /dev/null
+    test -f /etc/nginx/dhparam.key || openssl dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
+fi
+
+#//---------------------------------------------------------------------------
+#// generate nginx configuration file
+#//---------------------------------------------------------------------------
+cd /etc/nginx/conf.d \
+&& env FQDN=${FQDN?FQDN} \
+    DOCUMENTROOT=${DOCUMENTROOT?DOCUMENTROOT} \
+    KUSANAGI_PROVISION=${KUSANAGI_PROVISION?KUSANGI_PROVISION} \
+    NO_SSL_REDIRECT=${NO_SSL_REDIRECT:+#} \
+    DONOT_USE_FCACHE=${DONOT_USE_FCACHE:-0} \
+    EXPIRE_DAYS=${EXPIRE_DAYS:-90} \
+    USE_SSL_CT=${USE_SSL_CT:-off} \
+    USE_SSL_OSCP=${USE_SSL_OSCP:-off} \
+    SSL_CERT=${SSL_CERT:-/etc/nginx/localhost.crt} \
+    SSL_KEY=${SSL_KEY:-/etc/nginx/localhost.key} \
+    /usr/bin/envsubst '$$FQDN $$DOCUMENTROOT $$NO_SSL_REDIRECT $$DONOT_USE_FCACHE
+    $$EXPIRE_DAYS $$USE_SSL_CT $$USE_SSL_OSCP
+    $$SSL_CERT $$SSL_KEY $$OSCP_RESOLV $$KUSANAGI_PROVISION' \
+    < default.conf.template > default.conf \
+|| exit 1
+
+env PHPHOST=${PHPHOST:-127.0.0.1} envsubst '$$PHPHOST' \
+    < fastcgi.inc.template > fastcgi.inc
+if [ "$KUSANAGI_PROVISION" == "wp" ] ; then
+    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
+    < wp.inc.template > wp.inc 
+elif  [ "$KUSANAGI_PROVISION" == "lamp" ] ; then
+    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
+    < lamp.inc.template > lamp.inc 
+elif  [ "$KUSANAGI_PROVISION" == "rails" ] ; then
+    env ENV_SECRET_KEY_BASE=${ENV_SECRET_KEY_BASE?ENV_SECRET_KEY_BASE} \
+        RAILS_ENV=${RAILS_ENV:-development} \
+        NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+        /usr/bin/envsubst '$$ENV_SECRET_KEY_BASE $$ENV_SECRET_KEY_BASE
+        $$RAILS_ENV $$NO_USE_NAXSI $$NO_USE_SSLST' < rails.inc.template > rails.inc \
+   || exit 1
+fi
+
 #//---------------------------------------------------------------------------
 #// create self-signed cert
 #//---------------------------------------------------------------------------
-if [ -f /etc/pki/tls/private/localhost.key -o -f /etc/pki/tls/certs/localhost.crt ]; then
+if [ -f /etc/nginx/localhost.key -o -f /etc/nginx/localhost.crt ]; then
 	/bin/true
 else
-	/usr/bin/openssl genrsa -rand /proc/apm:/proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/pci:/proc/rtc:/proc/uptime 2048 > /etc/pki/tls/private/localhost.key 2> /dev/null
+	/usr/bin/openssl genrsa -rand /proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime 2048 > /etc/nginx/localhost.key 2> /dev/null
 
-	cat <<-EOF | /usr/bin/openssl req -new -key /etc/pki/tls/private/localhost.key \
-		-x509 -sha256 -days 365 -set_serial $RANDOM -extensions v3_req \
-		-out /etc/pki/tls/certs/localhost.crt 2>/dev/null
+	cat <<-EOF | /usr/bin/openssl req -new -key /etc/nginx/localhost.key \
+		-x509 -sha256 -days 365 -set_serial 1 -extensions v3_req \
+		-out /etc/nginx/localhost.crt 2>/dev/null
 --
 SomeState
 SomeCity
@@ -21,88 +86,7 @@ root@${FQDN}
 	EOF
 fi
 
-#//---------------------------------------------------------------------------
-#// create nginx/httpd conf
-#//---------------------------------------------------------------------------
-if [ ! -e /etc/nginx/conf.d/${PROFILE}_http.conf ]; then
-	
-	. /usr/lib/kusanagi/lib/functions.sh
-	sh -x /usr/lib/kusanagi/lib/virt.sh
-	if [ -n "$PROFILE" ]; then
-	    echo 'PROFILE="'$PROFILE'"' > /etc/kusanagi.conf
-	fi
-
-	for i in \
-		/etc/nginx/conf.d/${PROFILE}_*.conf \
-		/etc/httpd/conf.d/${PROFILE}_*.conf \
-		;
-	do
-		sed -i 's/127.0.0.1:9000/php:9000/' $i;
-	done
-fi
-
-#//---------------------------------------------------------------------------
-#// Improv security
-#//---------------------------------------------------------------------------
-# Improv Sec
-if [ ! -d /etc/kusanagi.d/ssl ] ; then
-	mkdir -p /etc/kusanagi.d/ssl
-fi
-if [ ! -e /etc/kusanagi.d/ssl/ssl_sess_ticket.key ] ; then
-	openssl rand 48 > /etc/kusanagi.d/ssl_sess_ticket.key
-fi
-if [ ! -e /etc/kusanagi.d/ssl/dhparam.key ] ; then
-	openssl dhparam 2048 -out /etc/kusanagi.d/ssl/dhparam.key
-fi
-
-#//---------------------------------------------------------------------------
-#// backend/frontend cache
-#//---------------------------------------------------------------------------
-WPCONFIG="/home/kusanagi/${PROFILE}/DocumentRoot/wp-config.php"
-WPCONFIG_SAMPLE="/home/kusanagi/${PROFILE}/DocumentRoot/wp-config-sample.php"
-
-NGINX_HTTP="/etc/nginx/conf.d/${PROFILE}_http.conf"
-NGINX_HTTPS="/etc/nginx/conf.d/${PROFILE}_ssl.conf"
-
-#//-------------------------------------
-#// backend cache
-#//-------------------------------------
-if [ "$BCACHE" = "on" ]; then
-	if [ -e $WPCONFIG ]; then
-		sed -i "s/^\s*define\s*(\s*'WP_CACHE'.*$/define('WP_CACHE', true);/" $WPCONFIG
-		sed -i "s/^\s*[#\/]\+\s*define\s*(\s*'WP_CACHE'.*$/define('WP_CACHE', true);/" $WPCONFIG
-	fi
-	if [ -e $WPCONFIG_SAMPLE ]; then
-		sed -i "s/^\s*define\s*(\s*'WP_CACHE'.*$/define('WP_CACHE', true);/" $WPCONFIG_SAMPLE
-		sed -i "s/^\s*[#\/]\+\s*define\s*(\s*'WP_CACHE'.*$/define('WP_CACHE', true);/" $WPCONFIG_SAMPLE
-	fi
-else
-	if [ -e $WPCONFIG ]; then
-		sed -i "s/^\s*define\s*(\s*'WP_CACHE'.*$/#define('WP_CACHE', true);/" $WPCONFIG
-	fi
-	if [ -e $WPCONFIG_SAMPLE ]; then
-		sed -i "s/^\s*define\s*(\s*'WP_CACHE'.*$/#define('WP_CACHE', true);/" $WPCONFIG_SAMPLE
-	fi
-fi
-
-#//-------------------------------------
-#// frontend cache
-#//-------------------------------------
-if [ "$FCACHE" = "on" ]; then
-	if [ -e $NGINX_HTTP ]; then
-		sed -i "s/set\s*\$do_not_cache\s*1\s*;\s*#\+\s*page\s*cache/set \$do_not_cache 0; ## page cache/" $NGINX_HTTP
-	fi
-	if [ -e $NGINX_HTTPS ]; then
-		sed -i "s/set\s*\$do_not_cache\s*1\s*;\s*#\+\s*page\s*cache/set \$do_not_cache 0; ## page cache/" $NGINX_HTTPS
-	fi
-else
-	if [ -e $NGINX_HTTP ]; then
-		sed -i "s/set\s*\$do_not_cache\s*0\s*;\s*#\+\s*page\s*cache/set \$do_not_cache 1; ## page cache/" $NGINX_HTTP
-	fi
-	if [ -e $NGINX_HTTPS ]; then
-		sed -i "s/set\s*\$do_not_cache\s*0\s*;\s*#\+\s*page\s*cache/set \$do_not_cache 1; ## page cache/" $NGINX_HTTPS
-	fi
-fi
+#echo 127.0.0.1 $FQDN >> /etc/hosts
 
 #//---------------------------------------------------------------------------
 #// execute nginx

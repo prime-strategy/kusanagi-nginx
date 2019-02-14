@@ -1,0 +1,18 @@
+passenger_enabled on;
+passenger_env_var SECRET_KEY_BASE ${ENV_SECRET_KEY_BASE};
+
+location / {
+
+    passenger_ruby /usr/bin/ruby;
+    passenger_min_instances 6;
+
+    rails_env ${RAILS_ENV};
+    #passenger_intercept_errors on;
+    error_page  404              /404.html;
+    error_page 500 502 503 504   /500.html;
+
+    add_header X-Signature KUSANAGI;
+    include conf.d/security.conf;
+    include conf.d/ssl_st.inc;
+    ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
+}
