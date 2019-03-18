@@ -1,21 +1,35 @@
 # WordPress template
 index index.php index.html index.htm;
 
-rewrite /wp-admin$ $scheme://$host$uri/ permanent;
-
 location / {
-    try_files $uri $uri/ /index.php?$args;
+        set $do_rewrite 1;
+        if (-f $request_filename) {
+                set $do_rewrite 0;
+        }
+
+        if (-f $request_filename/index.html) {
+                set $do_rewrite 0;
+        }
+        if (-f $request_filename/index.php) {
+                set $do_rewrite 0;
+        }
+
+        if ($do_rewrite = "1") {
+                rewrite ^/(.*)$ /index.php/$1 last;
+        }
+        ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
 }
 
 location ~* /\. {
     deny all;
 }
 
-location ~* /(?:uploads|files)/.*\.php$ {
+
+location ~* /application/files/.*\.php$ {
     deny all;
 }
 
-location ~* /wp-login\.php|/wp-admin/((?!(admin-ajax\.php|images/)).)*$ {
+location ~* /index.php/(login|dashboard.*|install.*)$ {
     satisfy any;
     allow 0.0.0.0/0;
     allow 127.0.0.1;
@@ -25,15 +39,15 @@ location ~* /wp-login\.php|/wp-admin/((?!(admin-ajax\.php|images/)).)*$ {
 
     location ~ [^/]\.php(/|$) {
         include /etc/nginx/conf.d/fastcgi.inc;
-        ${NO_USE_NAXSI}include naxsi.d/wordpress/*.conf;
+        ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
     }
     ${NO_USE_SSLST}include conf.d/ssl_st.inc;
-    ${NO_USE_NAXSI}include naxsi.d/wordpress/*.conf;
+    ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
 }
 
 location ~ [^/]\.php(/|$) {
     include conf.d/fastcgi.inc;
-    if ($request_uri ~* "(/wp-admin/|/xmlrpc.php|/wp-(app|cron|login|register|mail).php|wp-.*.php|/feed/|index.php|wp-comments-popup.php|wp-links-opml.php|wp-locations.php|sitemap(_index)?.xml|[a-z0-9_-]+-sitemap([0-9]+)?.xml)") {
+    if ($http_cookie ~* "CONCRETE5_LOGIN") {
         set $do_not_cache 1;
     }
 

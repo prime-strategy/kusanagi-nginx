@@ -14,10 +14,6 @@ if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_no
     set $do_not_cache 1;
 }
 
-if ($request_uri ~* "(/wp-admin/|/xmlrpc.php|/wp-(app|cron|login|register|mail).php|wp-.*.php|/feed/|index.php|wp-comments-popup.php|wp-links-opml.php|wp-locations.php|sitemap(_index)?.xml|[a-z0-9_-]+-sitemap([0-9]+)?.xml)") {
-    set $do_not_cache 1;
-}
-
 if ($http_user_agent ~* " Android |\(iPad|Android; Tablet; .+Firefox") {
     set $device "tablet";
 }

@@ -1,4 +1,4 @@
-# WordPress template
+# LAMP template
 index index.php index.html index.htm;
 
 location / {

@@ -27,9 +27,9 @@ fi
 #// generate nginx configuration file
 #//---------------------------------------------------------------------------
 cd /etc/nginx/conf.d \
-&& env FQDN=${FQDN?FQDN} \
-    DOCUMENTROOT=${DOCUMENTROOT?DOCUMENTROOT} \
-    KUSANAGI_PROVISION=${KUSANAGI_PROVISION?KUSANGI_PROVISION} \
+&& env FQDN=${FQDN:-localhost.localdomain} \
+    DOCUMENTROOT=${DOCUMENTROOT:-/var/www/html} \
+    KUSANAGI_PROVISION=${KUSANAGI_PROVISION:-lamp} \
     NO_SSL_REDIRECT=${NO_SSL_REDIRECT:+#} \
     DONOT_USE_FCACHE=${DONOT_USE_FCACHE:-0} \
     EXPIRE_DAYS=${EXPIRE_DAYS:-90} \

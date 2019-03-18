@@ -1,0 +1,35 @@
+# Drupal template
+index index.php index.html index.htm;
+
+location / {
+     try_files $uri @rewrite;
+     ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
+}
+
+location @rewrite {
+    rewrite ^ /index.php;
+    ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
+}
+
+location ~ [^/]\.php(/|$) {
+    include conf.d/fastcgi.inc;
+    include conf.d/fastcgi_cache.inc;
+
+    add_header X-Signature KUSANAGI;
+    ${NO_USE_SSLST}include conf.d/ssl_st.inc;
+    ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
+}
+
+#Fighting with ImageCache? This little gem is amazing.
+location ~ ^/sites/.*/files/imagecache/ {
+        try_files $uri @rewrite;
+        #include naxsi.d/general/*.conf;
+}
+
+# Catch image styles for D7 too.
+location ~ ^/sites/.*/files/styles/ {
+        try_files $uri @rewrite;
+        #include naxsi.d/general/*.conf;
+}
+
+
