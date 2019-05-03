@@ -4,7 +4,7 @@
 FROM alpine:3.9
 MAINTAINER kusanagi@prime-strategy.co.jp
 
-ENV NGINX_VERSION 1.15.9
+ENV NGINX_VERSION 1.15.10
 ENV nginx_ct_version 1.3.2
 ENV ngx_cache_purge_version 2.3
 ENV ngx_brotli_version master
@@ -31,50 +31,22 @@ RUN : \
         && : # END of RUN
 
 COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
+COPY files/add_dev.sh /usr/local/bin
+COPY files/del_dev.sh /usr/local/bin
 
 # prep
 RUN : \
 \
 	# add build pkg
-	&& CC=/usr/bin/cc CXX=/usr/bin/c++ \
+	&& CC=/usr/bin/cc \
+	&& CXX=/usr/bin/c++ \
 	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8  \
 	&& brotli_version=222564a95d9ab58865a096b8d9f7324ea5f2e03e \
 	&& naxsi_tarball_name=naxsi \
 	&& lua_nginx_module_name=lua-nginx-module \
 	&& LUAJIT_LIB=/usr/lib \
 	&& LUAJIT_INC=/usr/include/luajit-$LUA_VERSION \
-	&& apk add --no-cache --virtual .builddep \
-		gnupg1 \
-		gcc \
-		g++ \
-		make \
-		autoconf \
-		automake \
-		patch \
-		ruby-rake \
-		curl \
-		curl-dev \
-		musl-dev \
-		perl-dev \
-		libxslt-dev \
-		openssl-dev \
-		linux-headers \
-		luajit-dev \
-		libpng-dev \
-		freetype-dev \
-		libxpm-dev \
-		expat-dev \
-		tiff-dev \
-		libxcb-dev \
-		lua-dev \
-		pcre-dev \
-		geoip-dev \
-		gd-dev \
-		ruby-etc \
-		ruby-dev \
-		libxpm-dev \
-		fontconfig-dev \
-		go \
+	&& /usr/local/bin/add_dev.sh \
 	&& cd /tmp/build \
 	&& curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
 	&& curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc -o nginx.tar.gz.asc \
@@ -193,7 +165,6 @@ RUN : \
 	&& make install \
 	&& mkdir -p /usr/lib/nginx/modules \
 	&& (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
-	&& apk add --no-cache --virtual .gettext gettext \
 	&& mv /usr/bin/envsubst /tmp/ \
 \
 # add ct-submit
@@ -208,15 +179,14 @@ RUN : \
 			| sort -u \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)" \
-	&& apk del --virtual .gettext \
-	&& mv /tmp/envsubst /usr/bin/envsubst \
-	&& mv /tmp/ct-submit /usr/bin/ct-submit \
-	&& chmod 700 /usr/bin/ct-submit \
 	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
 	&& (strip /usr/sbin/nginx /usr/lib/nginx/modules/*.so; true) \
 	&& (chmod 755 /usr/lib/nginx/modules/*.so; true) \
-	&& apk del --purge --virtual .builddep \
-\
+	&& /usr/local/bin/del_dev.sh \
+	&& mv /tmp/envsubst /usr/bin/envsubst \
+	&& mv /tmp/ct-submit /usr/bin/ct-submit \
+	&& chmod 700 /usr/bin/ct-submit \
+	\
 # setup configures
 	&& mkdir -p -m755 /var/www/html \
 		/etc/nginx/conf.d \
