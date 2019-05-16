@@ -23,18 +23,20 @@ if [ ! -e /etc/nginx/dhparam.key ] ; then
     test -f /etc/nginx/dhparam.key || openssl dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
 fi
 
+KUSANAGI_PROVISION=${KUSANAGI_PROVISION:-lamp}
 #//---------------------------------------------------------------------------
 #// generate nginx configuration file
 #//---------------------------------------------------------------------------
 cd /etc/nginx/conf.d \
 && env FQDN=${FQDN:-localhost.localdomain} \
     DOCUMENTROOT=${DOCUMENTROOT:-/var/www/html} \
-    KUSANAGI_PROVISION=${KUSANAGI_PROVISION:-lamp} \
+    KUSANAGI_PROVISION=${KUSANAGI_PROVISION} \
     NO_SSL_REDIRECT=${NO_SSL_REDIRECT:+#} \
     DONOT_USE_FCACHE=${DONOT_USE_FCACHE:-0} \
     EXPIRE_DAYS=${EXPIRE_DAYS:-90} \
     USE_SSL_CT=${USE_SSL_CT:-off} \
     USE_SSL_OSCP=${USE_SSL_OSCP:-off} \
+    OSCP_RESOLV=${OSCP_RESOLV} \
     SSL_CERT=${SSL_CERT:-/etc/nginx/localhost.crt} \
     SSL_KEY=${SSL_KEY:-/etc/nginx/localhost.key} \
     /usr/bin/envsubst '$$FQDN $$DOCUMENTROOT $$NO_SSL_REDIRECT $$DONOT_USE_FCACHE
@@ -44,25 +46,35 @@ cd /etc/nginx/conf.d \
 || exit 1
 
 env PHPHOST=${PHPHOST:-127.0.0.1} envsubst '$$PHPHOST' \
-    < fastcgi.inc.template > fastcgi.inc
+    < fastcgi.inc.template > fastcgi.inc || exit 1
 if [ "$KUSANAGI_PROVISION" == "wp" ] ; then
     env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 	NO_USE_SSLST=${NO_USE_SSLST:+#} \
 	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
-    < wp.inc.template > wp.inc 
+    < wp.inc.template > wp.inc || exit 1
 elif  [ "$KUSANAGI_PROVISION" == "lamp" ] ; then
     env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 	NO_USE_SSLST=${NO_USE_SSLST:+#} \
 	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
-    < lamp.inc.template > lamp.inc 
-elif  [ "$KUSANAGI_PROVISION" == "rails" ] ; then
-    env ENV_SECRET_KEY_BASE=${ENV_SECRET_KEY_BASE?ENV_SECRET_KEY_BASE} \
-        RAILS_ENV=${RAILS_ENV:-development} \
-        NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+    < lamp.inc.template > lamp.inc || exit 1
+elif  [ "$KUSANAGI_PROVISION" == "drupal" ] ; then
+    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 	NO_USE_SSLST=${NO_USE_SSLST:+#} \
-        /usr/bin/envsubst '$$ENV_SECRET_KEY_BASE $$ENV_SECRET_KEY_BASE
-        $$RAILS_ENV $$NO_USE_NAXSI $$NO_USE_SSLST' < rails.inc.template > rails.inc \
-   || exit 1
+	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
+    < drupal.inc.template > drupal.inc || exit 1
+elif  [ "$KUSANAGI_PROVISION" == "c5" ] ; then
+    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
+    < c5.inc.template > c5.inc || exit 1
+#elif  [ "$KUSANAGI_PROVISION" == "rails" ] ; then
+#    env ENV_SECRET_KEY_BASE=${ENV_SECRET_KEY_BASE?ENV_SECRET_KEY_BASE} \
+#        RAILS_ENV=${RAILS_ENV:-development} \
+#        NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+#	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+#        /usr/bin/envsubst '$$ENV_SECRET_KEY_BASE $$ENV_SECRET_KEY_BASE
+#        $$RAILS_ENV $$NO_USE_NAXSI $$NO_USE_SSLST' < rails.inc.template > rails.inc \
+#   || exit 1
 fi
 
 #//---------------------------------------------------------------------------
