@@ -23,13 +23,14 @@ if [ ! -e /etc/nginx/dhparam.key ] ; then
     test -f /etc/nginx/dhparam.key || openssl dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
 fi
 
+KUSANAGI_PROVISION=${KUSANAGI_PROVISION:-lamp}
 #//---------------------------------------------------------------------------
 #// generate nginx configuration file
 #//---------------------------------------------------------------------------
 cd /etc/nginx/conf.d \
 && env FQDN=${FQDN:-localhost.localdomain} \
     DOCUMENTROOT=${DOCUMENTROOT:-/var/www/html} \
-    KUSANAGI_PROVISION=${KUSANAGI_PROVISION:-lamp} \
+    KUSANAGI_PROVISION=${KUSANAGI_PROVISION} \
     NO_SSL_REDIRECT=${NO_SSL_REDIRECT:+#} \
     DONOT_USE_FCACHE=${DONOT_USE_FCACHE:-0} \
     EXPIRE_DAYS=${EXPIRE_DAYS:-90} \
@@ -45,7 +46,7 @@ cd /etc/nginx/conf.d \
 || exit 1
 
 env PHPHOST=${PHPHOST:-127.0.0.1} envsubst '$$PHPHOST' \
-    < fastcgi.inc.template > fastcgi.inc
+    < fastcgi.inc.template > fastcgi.inc || exit 1
 if [ "$KUSANAGI_PROVISION" == "wp" ] ; then
     env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 	NO_USE_SSLST=${NO_USE_SSLST:+#} \

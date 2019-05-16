@@ -31,5 +31,9 @@ apk add --no-cache --virtual .builddep \
 		ruby-dev \
 		libxpm-dev \
 		fontconfig-dev \
+		libuuid \
+		util-linux-dev \
+		zlib-dev \
 		go \
+		gnupg \
 		gettext
