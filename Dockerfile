@@ -28,7 +28,7 @@ COPY files/del_dev.sh /usr/local/bin
 RUN : \
 \
 	# add build pkg
-	&& NGINX_VERSION=1.15.12 \
+	&& NGINX_VERSION=1.16.0 \
 	&& nginx_ct_version=1.3.2 \
 	&& ngx_cache_purge_version=2.3 \
 	&& ngx_brotli_version=master \
@@ -221,7 +221,9 @@ COPY files/ct-submit.sh /usr/bin/ct-submit.sh
 RUN cd /etc/nginx/ \
 	&& chmod 700 /usr/bin/ct-submit.sh \
 	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
-	&& apk add --no-cache tzdata openssl \
+	&& apk add --no-cache tzdata openssl certbot \
+	&& mkdir /etc/letsencrypt /var/lib/letsencrypt /var/log/letsencrypt \
+	&& chown -R httpd:www /etc/letsencrypt /var/lib/letsencrypt /var/log/letsencrypt \
 	&& : # END of RUN
 
 ARG MICROSCANNER_TOKEN
