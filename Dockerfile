@@ -28,7 +28,7 @@ COPY files/del_dev.sh /usr/local/bin
 RUN : \
 \
 	# add build pkg
-	&& NGINX_VERSION=1.16.0 \
+	&& NGINX_VERSION=1.17.0 \
 	&& nginx_ct_version=1.3.2 \
 	&& ngx_cache_purge_version=2.3 \
 	&& ngx_brotli_version=master \
