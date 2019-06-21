@@ -1,2 +1,2 @@
 #!
-apk del --purge --virtual .builddep
+apk del --purge --verbose .builddep

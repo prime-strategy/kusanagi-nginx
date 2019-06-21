@@ -1,6 +1,6 @@
 #!/bin/sh
 # add build pkg
-apk add --no-cache --virtual .builddep \
+apk add --no-cache \
 		gnupg1 \
 		gcc \
 		g++ \

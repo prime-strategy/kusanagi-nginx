@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM alpine:3.9
+FROM alpine:3.10
 MAINTAINER kusanagi@prime-strategy.co.jp
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -25,7 +25,7 @@ COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
 ENV NGINX_VERSION=1.16.0 
-ENV NGINX_DEPS gnupg1 \
+ENV NGINX_DEPS gnupg \
 		gcc \
 		g++ \
 		make  \
@@ -59,22 +59,17 @@ ENV NGINX_DEPS gnupg1 \
 		util-linux-dev \
 		zlib-dev \
 		go \
-		gnupg \
 		gettext
-
 
 # prep
 RUN : \
 \
 	# add build pkg
-	&& NGINX_VERSION=1.16.0 \
 	&& nginx_ct_version=1.3.2 \
 	&& ngx_cache_purge_version=2.3 \
 	&& ngx_brotli_version=master \
 	&& naxsi_version=0.56 \
 	&& nps_version=1.13.35.2 \
-	&& CC=/usr/bin/cc \
-	&& CXX=/usr/bin/c++ \
 	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& brotli_version=222564a95d9ab58865a096b8d9f7324ea5f2e03e \
 	&& naxsi_tarball_name=naxsi \
@@ -86,7 +81,9 @@ RUN : \
 	&& CT_SUBMIT_VERSION=1.1.2 \
 	&& LUAJIT_LIB=/usr/lib \
 	&& LUAJIT_INC=/usr/include/luajit-$LUA_VERSION \
-	&& /usr/local/bin/add_dev.sh \
+	&& CC=/usr/bin/cc \
+	&& CXX=/usr/bin/c++ \
+	&& apk add --no-cache --virtual .builddep $NGINX_DEPS \
 	&& cd /tmp/build \
 	&& curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
 	&& curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc -o nginx.tar.gz.asc \
@@ -202,9 +199,11 @@ RUN : \
 \
 # build
 	&& make -j$(getconf _NPROCESSORS_ONLN) \
-	&& find . -type f -a -name 'nginx' -o -name '*.so*' | xargs strip \
+	&& (find . -type f -a -name 'nginx' -o -name '*.so*' | xargs strip ; true) \
+	&& (find . -type f -a -name '*.so*' | xargs chmod 755 ; true) \
 	&& make install \
-	&& mkdir -p /usr/lib/nginx/modules \
+	&& mkdir -p /usr/lib/nginx/modules /etc/nginx/naxsi.d \
+	&& install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
 	&& (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
 	&& mv /usr/bin/envsubst /tmp/ \
 \
@@ -221,9 +220,8 @@ RUN : \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)" \
 	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
-	&& (strip /usr/sbin/nginx /usr/lib/nginx/modules/*.so; true) \
-	&& (chmod 755 /usr/lib/nginx/modules/*.so; true) \
-	&& /usr/local/bin/del_dev.sh \
+	&& apk del --purge .builddep \
+\
 	&& mv /tmp/envsubst /usr/bin/envsubst \
 	&& mv /tmp/ct-submit /usr/bin/ct-submit \
 	&& chmod 700 /usr/bin/ct-submit \
@@ -241,9 +239,6 @@ RUN : \
 	&& install -m644 /etc/nginx/html/50x.html /var/www/html \
 	&& install -m644 /etc/nginx/html/index.html /var/www/html \
 	&& mkdir -p -m755 /etc/nginx/scts /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
-	&& cd /tmp/build/nginx-${NGINX_VERSION}/ \
-	&& install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
-	&& cd / \
 	&& rm -rf /tmp/build \
 	&& : # END of RUN
 
@@ -273,7 +268,7 @@ RUN if [ x${MICROSCANNER_TOKEN} != x ] ; then \
 	&& chmod +x microscanner \
 	&& ./microscanner ${MICROSCANNER_TOKEN} || exit 1\
 	&& rm ./microscanner \
-	&& apk del --purge --virtual .ca ;\
+	&& apk del --purge .ca ;\
     fi
 
 EXPOSE 8080
