@@ -24,6 +24,45 @@ COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
+ENV NGINX_VERSION=1.16.0 
+ENV NGINX_DEPS gnupg1 \
+		gcc \
+		g++ \
+		make  \
+		autoconf \
+		automake \
+		patch \
+		ruby-rake \
+		curl \
+		curl-dev \
+		musl-dev \
+		perl-dev \
+		libxslt-dev \
+		openssl-dev \
+		linux-headers \
+		luajit-dev \
+		libpng-dev \
+		freetype-dev \
+		libxpm-dev \
+		expat-dev \
+		tiff-dev \
+		libxcb-dev \
+		lua-dev \
+		pcre-dev \
+		geoip-dev \
+		gd-dev \
+		ruby-etc \
+		ruby-dev \
+		libxpm-dev \
+		fontconfig-dev \
+		libuuid \
+		util-linux-dev \
+		zlib-dev \
+		go \
+		gnupg \
+		gettext
+
+
 # prep
 RUN : \
 \
