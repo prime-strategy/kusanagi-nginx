@@ -34,14 +34,14 @@ cd /etc/nginx/conf.d \
     DOCUMENTROOT=${DOCUMENTROOT:-/var/www/html} \
     KUSANAGI_PROVISION=${KUSANAGI_PROVISION} \
     NO_SSL_REDIRECT=${NO_SSL_REDIRECT:+#} \
-    DONOT_USE_FCACHE=${DONOT_USE_FCACHE:-0} \
+    NO_USE_FCACHE=${NO_USE_FCACHE:-0} \
     EXPIRE_DAYS=${EXPIRE_DAYS:-90} \
     USE_SSL_CT=${USE_SSL_CT:-off} \
     USE_SSL_OSCP=${USE_SSL_OSCP:-off} \
     OSCP_RESOLV=${OSCP_RESOLV} \
     SSL_CERT=${SSL_CERT:-/etc/nginx/localhost.crt} \
     SSL_KEY=${SSL_KEY:-/etc/nginx/localhost.key} \
-    /usr/bin/envsubst '$$FQDN $$DOCUMENTROOT $$NO_SSL_REDIRECT $$DONOT_USE_FCACHE
+    /usr/bin/envsubst '$$FQDN $$DOCUMENTROOT $$NO_SSL_REDIRECT $$NO_USE_FCACHE
     $$EXPIRE_DAYS $$USE_SSL_CT $$USE_SSL_OSCP
     $$SSL_CERT $$SSL_KEY $$OSCP_RESOLV $$KUSANAGI_PROVISION' \
     < default.conf.template > default.conf \
