@@ -24,7 +24,7 @@ COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.17.0 
+ENV NGINX_VERSION=1.17.1 
 ENV NGINX_DEPS gnupg1 \
 		gcc \
 		g++ \
@@ -257,9 +257,7 @@ COPY files/ct-submit.sh /usr/bin/ct-submit.sh
 RUN cd /etc/nginx/ \
 	&& chmod 700 /usr/bin/ct-submit.sh \
 	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
-	&& apk add --no-cache tzdata openssl certbot \
-	&& mkdir /etc/letsencrypt /var/lib/letsencrypt /var/log/letsencrypt \
-	&& chown -R httpd:www /etc/letsencrypt /var/lib/letsencrypt /var/log/letsencrypt \
+	&& apk add --no-cache tzdata openssl \
 	&& : # END of RUN
 
 ARG MICROSCANNER_TOKEN
