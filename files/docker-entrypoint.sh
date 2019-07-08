@@ -1,7 +1,5 @@
 #!/bin/sh
 
-export PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin
-
 function env2cert {
     file=$1
     var="$2"
@@ -85,9 +83,9 @@ fi
 if [ -f /etc/nginx/localhost.key -o -f /etc/nginx/localhost.crt ]; then
 	/bin/true
 else
-	openssl genrsa -rand /proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime 2048 > /etc/nginx/localhost.key 2> /dev/null
+	/usr/bin/openssl genrsa -rand /proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime 2048 > /etc/nginx/localhost.key 2> /dev/null
 
-	cat <<-EOF | openssl req -new -key /etc/nginx/localhost.key \
+	cat <<-EOF | /usr/bin/openssl req -new -key /etc/nginx/localhost.key \
 		-x509 -sha256 -days 365 -set_serial 1 -extensions v3_req \
 		-out /etc/nginx/localhost.crt 2>/dev/null
 --

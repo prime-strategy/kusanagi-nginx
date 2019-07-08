@@ -9,7 +9,7 @@ server {
     server_name ${FQDN};
     ${NO_SSL_REDIRECT}rewrite ^(.*)$ https://${FQDN}$request_uri permanent; # SSL ONLY
 
-    set $do_not_cache ${DONOT_USE_FCACHE}; ## page cache
+    set $do_not_cache ${NO_USE_FCACHE}; ## page cache
     set $expire_days ${EXPIRE_DAYS};
     
     charset UTF-8;
@@ -29,7 +29,7 @@ server {
     listen [::]:8443 ssl http2;
     server_name ${FQDN};
 
-    set $do_not_cache ${DONOT_USE_FCACHE}; ## page cache
+    set $do_not_cache ${NO_USE_FCACHE}; ## page cache
     set $expire_days ${EXPIRE_DAYS};
     
     ssl_certificate     ${SSL_CERT};
