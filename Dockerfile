@@ -266,7 +266,7 @@ RUN if [ x${MICROSCANNER_TOKEN} != x ] ; then \
 	&& update-ca-certificates\
 	&& wget --no-check-certificate https://get.aquasec.com/microscanner \
 	&& chmod +x microscanner \
-	&& ./microscanner ${MICROSCANNER_TOKEN} || exit 1\
+	&& ./microscanner ${MICROSCANNER_TOKEN} --continue-on-failure \
 	&& rm ./microscanner \
 	&& apk del --purge .ca ;\
     fi
