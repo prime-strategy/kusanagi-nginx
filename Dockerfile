@@ -24,7 +24,7 @@ COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.16.0 
+ENV NGINX_VERSION=1.16.1 
 ENV NGINX_DEPS gnupg \
 		gcc \
 		g++ \
@@ -266,7 +266,7 @@ RUN if [ x${MICROSCANNER_TOKEN} != x ] ; then \
 	&& update-ca-certificates\
 	&& wget --no-check-certificate https://get.aquasec.com/microscanner \
 	&& chmod +x microscanner \
-	&& ./microscanner ${MICROSCANNER_TOKEN} || exit 1\
+	&& ./microscanner ${MICROSCANNER_TOKEN} --continue-on-failure \
 	&& rm ./microscanner \
 	&& apk del --purge .ca ;\
     fi
