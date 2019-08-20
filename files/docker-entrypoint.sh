@@ -6,7 +6,7 @@ function env2cert {
     file=$1
     var="$2"
     (echo "$var" | sed 's/"//g' | grep '^-----' > /dev/null) && 
-    (echo "$var" | sed -e 's/"//g' -e 's/\r//g' | sed -e 's/- /-\n/' -e 's/ -/\n-/' | sed -e '2s/ /\n/g' > $file) && 
+    (echo "$var" | sed -e 's/"//g' -e 's/\r//g' | sed -e 's/- /-\n/g' -e 's/ -/\n-/g' | sed -e '2s/ /\n/g' > $file) && 
     echo -n $file || echo -n
 }
 
