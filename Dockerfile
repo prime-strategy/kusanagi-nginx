@@ -24,8 +24,8 @@ COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.16.0 
-ENV NGINX_DEPS gnupg \
+ENV NGINX_VERSION=1.16.1
+ENV NGINX_DEPS gnupg1 \
 		gcc \
 		g++ \
 		make  \
@@ -59,6 +59,7 @@ ENV NGINX_DEPS gnupg \
 		util-linux-dev \
 		zlib-dev \
 		go \
+		gnupg \
 		gettext
 
 # prep
@@ -67,11 +68,11 @@ RUN : \
 	# add build pkg
 	&& nginx_ct_version=1.3.2 \
 	&& ngx_cache_purge_version=2.3 \
-	&& ngx_brotli_version=master \
+	&& ngx_brotli_version=e505dce68acc190cc5a1e780a3b0275e39f160ca \
 	&& naxsi_version=0.56 \
 	&& nps_version=1.13.35.2 \
 	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
-	&& brotli_version=222564a95d9ab58865a096b8d9f7324ea5f2e03e \
+	&& brotli_version=1.0.7 \
 	&& naxsi_tarball_name=naxsi \
 	&& lua_nginx_module_name=lua-nginx-module \
 	&& ngx_devel_kit_version=0.3.0 \
@@ -108,7 +109,7 @@ RUN : \
 	&& curl -Lo nginx-ct-${nginx_ct_version}.tar.gz https://github.com/grahamedgecombe/nginx-ct/archive/v${nginx_ct_version}.tar.gz \
 	&& curl -Lo ngx_cache_purge-${ngx_cache_purge_version}.tar.gz https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz \
 	&& curl -Lo ngx_brotli-${ngx_brotli_version}.tar.gz https://github.com/google/ngx_brotli/archive/${ngx_brotli_version}.tar.gz \
-	&& curl -Lo brotli-${brotli_version}.tar.gz https://github.com/google/brotli/archive/${brotli_version}.tar.gz \
+	&& curl -Lo brotli-${brotli_version}.tar.gz https://github.com/google/brotli/archive/v${brotli_version}.tar.gz \
 	&& curl -Lo ngx_devel_kit-${ngx_devel_kit_version}.tar.gz https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz \
 	&& curl -Lo ${lua_nginx_module_name}-${lua_nginx_module_version}.tar.gz https://github.com/openresty/${lua_nginx_module_name}/archive/v${lua_nginx_module_version}.tar.gz \
 	&& curl -Lo ${naxsi_tarball_name}-${naxsi_version}.tar.gz https://github.com/nbs-system/naxsi/archive/${naxsi_version}.tar.gz \
@@ -243,8 +244,6 @@ RUN : \
 	&& : # END of RUN
 
 COPY files/nginx.conf /etc/nginx/nginx.conf
-COPY files/nginx_httpd.conf /etc/nginx/conf.d/_nginx.conf
-COPY files/nginx_ssl.conf /etc/nginx/conf.d/_ssl.conf
 COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
 COPY files/naxsi.d/ /etc/nginx/naxsi.d/
 COPY files/templates/ /etc/nginx/conf.d/
@@ -255,9 +254,7 @@ COPY files/ct-submit.sh /usr/bin/ct-submit.sh
 RUN cd /etc/nginx/ \
 	&& chmod 700 /usr/bin/ct-submit.sh \
 	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
-	&& apk add --no-cache tzdata openssl certbot \
-	&& mkdir /etc/letsencrypt /var/lib/letsencrypt /var/log/letsencrypt \
-	&& chown -R httpd:www /etc/letsencrypt /var/lib/letsencrypt /var/log/letsencrypt \
+	&& apk add --no-cache tzdata openssl \
 	&& : # END of RUN
 
 ARG MICROSCANNER_TOKEN

@@ -6,7 +6,7 @@ function env2cert {
     file=$1
     var="$2"
     (echo "$var" | sed 's/"//g' | grep '^-----' > /dev/null) && 
-    (echo "$var" | sed -e 's/"//g' -e 's/\r//g' | sed -e 's/- /-\n/' -e 's/ -/\n-/' | sed -e '2s/ /\n/g' > $file) && 
+    (echo "$var" | sed -e 's/"//g' -e 's/\r//g' | sed -e 's/- /-\n/g' -e 's/ -/\n-/g' | sed -e '2s/ /\n/g' > $file) && 
     echo -n $file || echo -n
 }
 
@@ -34,41 +34,25 @@ cd /etc/nginx/conf.d \
     DOCUMENTROOT=${DOCUMENTROOT:-/var/www/html} \
     KUSANAGI_PROVISION=${KUSANAGI_PROVISION} \
     NO_SSL_REDIRECT=${NO_SSL_REDIRECT:+#} \
-    DONOT_USE_FCACHE=${DONOT_USE_FCACHE:-0} \
+    NO_USE_FCACHE=${NO_USE_FCACHE:-0} \
     EXPIRE_DAYS=${EXPIRE_DAYS:-90} \
     USE_SSL_CT=${USE_SSL_CT:-off} \
     USE_SSL_OSCP=${USE_SSL_OSCP:-off} \
     OSCP_RESOLV=${OSCP_RESOLV} \
     SSL_CERT=${SSL_CERT:-/etc/nginx/localhost.crt} \
     SSL_KEY=${SSL_KEY:-/etc/nginx/localhost.key} \
-    /usr/bin/envsubst '$$FQDN $$DOCUMENTROOT $$NO_SSL_REDIRECT $$DONOT_USE_FCACHE
-    $$EXPIRE_DAYS $$USE_SSL_CT $$USE_SSL_OSCP
+    /usr/bin/envsubst '$$FQDN $$DOCUMENTROOT $$NO_SSL_REDIRECT
+    $$NO_USE_FCACHE $$EXPIRE_DAYS $$USE_SSL_CT $$USE_SSL_OSCP
     $$SSL_CERT $$SSL_KEY $$OSCP_RESOLV $$KUSANAGI_PROVISION' \
     < default.conf.template > default.conf \
 || exit 1
 
 env PHPHOST=${PHPHOST:-127.0.0.1} envsubst '$$PHPHOST' \
     < fastcgi.inc.template > fastcgi.inc || exit 1
-if [ "$KUSANAGI_PROVISION" == "wp" ] ; then
-    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
-	NO_USE_SSLST=${NO_USE_SSLST:+#} \
-	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
-    < wp.inc.template > wp.inc || exit 1
-elif  [ "$KUSANAGI_PROVISION" == "lamp" ] ; then
-    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
-	NO_USE_SSLST=${NO_USE_SSLST:+#} \
-	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
-    < lamp.inc.template > lamp.inc || exit 1
-elif  [ "$KUSANAGI_PROVISION" == "drupal" ] ; then
-    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
-	NO_USE_SSLST=${NO_USE_SSLST:+#} \
-	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
-    < drupal.inc.template > drupal.inc || exit 1
-elif  [ "$KUSANAGI_PROVISION" == "c5" ] ; then
-    env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
-	NO_USE_SSLST=${NO_USE_SSLST:+#} \
-	/usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
-    < c5.inc.template > c5.inc || exit 1
+env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
+    NO_USE_SSLST=${NO_USE_SSLST:+#} \
+    /usr/bin/envsubst '$$NO_USE_NAXSI $$NO_USE_SSLST' \
+    < ${KUSANAGI_PROVISION}.inc.template > ${KUSANAGI_PROVISION}.inc || exit 1
 #elif  [ "$KUSANAGI_PROVISION" == "rails" ] ; then
 #    env ENV_SECRET_KEY_BASE=${ENV_SECRET_KEY_BASE?ENV_SECRET_KEY_BASE} \
 #        RAILS_ENV=${RAILS_ENV:-development} \
@@ -77,7 +61,6 @@ elif  [ "$KUSANAGI_PROVISION" == "c5" ] ; then
 #        /usr/bin/envsubst '$$ENV_SECRET_KEY_BASE $$ENV_SECRET_KEY_BASE
 #        $$RAILS_ENV $$NO_USE_NAXSI $$NO_USE_SSLST' < rails.inc.template > rails.inc \
 #   || exit 1
-fi
 
 #//---------------------------------------------------------------------------
 #// create self-signed cert
