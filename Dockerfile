@@ -24,7 +24,7 @@ COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.17.5
+ENV NGINX_VERSION=1.17.6
 ENV NGINX_DEPS gnupg1 \
 		gcc \
 		g++ \
