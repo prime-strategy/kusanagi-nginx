@@ -24,7 +24,7 @@ COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.17.8
+ENV NGINX_VERSION=1.17.9
 ENV NGINX_DEPS gnupg1 \
 		gcc \
 		g++ \
@@ -68,7 +68,7 @@ RUN : \
 	# add build pkg
 	&& nginx_ct_version=1.3.2 \
 	&& ngx_cache_purge_version=2.3 \
-	&& ngx_brotli_version=e505dce68acc190cc5a1e780a3b0275e39f160ca \
+	&& ngx_brotli_version=c05e753cbc30350ebb3e7cae29aec64a3733875a \
 	&& naxsi_version=0.56 \
 	&& nps_version=1.13.35.2 \
 	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
@@ -178,7 +178,7 @@ RUN : \
 		--with-compat \
 		--with-file-aio \
 		--with-http_v2_module \
-	    	--with-http_image_filter_module \
+		--with-http_image_filter_module \
 		--with-http_geoip_module \
 		--with-http_perl_module \
 		--add-module=./extensions/ngx_devel_kit \
