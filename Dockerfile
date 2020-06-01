@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM alpine:3.11
+FROM alpine:3.12
 MAINTAINER kusanagi@prime-strategy.co.jp
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -24,7 +24,7 @@ COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.17.9
+ENV NGINX_VERSION=1.18.0
 ENV NGINX_DEPS gnupg1 \
 		gcc \
 		g++ \
@@ -75,13 +75,13 @@ RUN : \
 	&& brotli_version=1.0.7 \
 	&& naxsi_tarball_name=naxsi \
 	&& lua_nginx_module_name=lua-nginx-module \
-	&& ngx_devel_kit_version=0.3.0 \
+	&& ngx_devel_kit_version=0.3.1 \
 	&& LUAJIT_VERSION=2.1.0-beta3 \
 	&& LUA_VERSION=2.1 \
-	&& lua_nginx_module_version=0.10.13 \
+	&& lua_nginx_module_version=0.10.15 \
 	&& CT_SUBMIT_VERSION=1.1.2 \
-	&& LUAJIT_LIB=/usr/lib \
-	&& LUAJIT_INC=/usr/include/luajit-$LUA_VERSION \
+	&& export LUAJIT_LIB=/usr/lib \
+	&& export LUAJIT_INC=/usr/include/luajit-$LUA_VERSION \
 	&& CC=/usr/bin/cc \
 	&& CXX=/usr/bin/c++ \
 	&& apk add --no-cache --virtual .builddep $NGINX_DEPS \
