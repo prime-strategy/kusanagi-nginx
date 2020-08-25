@@ -140,7 +140,7 @@ RUN : \
 		--sbin-path=/usr/sbin/nginx \
 		--modules-path=/usr/lib/nginx/modules \
 		--error-log-path=/dev/stderr \
-		--http-log-path=dev/stdout \
+		--http-log-path=/dev/stdout \
 		--pid-path=/var/run/nginx.pid \
 		--lock-path=/var/run/nginx.lock \
 		--http-client-body-temp-path=/var/cache/nginx/client_temp \
