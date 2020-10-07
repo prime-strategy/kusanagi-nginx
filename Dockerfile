@@ -8,23 +8,19 @@ ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 # add user
 RUN : \
-        && apk update \
-        && apk upgrade \
-        && apk add --no-cache --virtual .user shadow \
-        && groupadd -g 1001 www \
-        && useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
-        && groupadd -g 1000 kusanagi \
-        && useradd -d /home/kusanagi -s /bin/nologin -g kusanagi -G www -u 1000 -m kusanagi \
-        && chmod 755 /home/kusanagi \
-        && apk del --purge .user \
-        && mkdir /tmp/build \
-        && : # END of RUN
+	&& apk add --no-cache --virtual .user shadow \
+	&& groupadd -g 1001 www \
+	&& useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
+	&& groupadd -g 1000 kusanagi \
+	&& useradd -d /home/kusanagi -s /bin/nologin -g kusanagi -G www -u 1000 -m kusanagi \
+	&& chmod 755 /home/kusanagi \
+	&& apk del --purge .user \
+	&& : # END of RUN
 
-COPY files/fast_cgiparams_CVE-2016-5387.patch /tmp/build
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.19.2
+ENV NGINX_VERSION=1.19.3
 ENV NGINX_DEPS gnupg1 \
 		gcc \
 		g++ \
@@ -40,14 +36,12 @@ ENV NGINX_DEPS gnupg1 \
 		libxslt-dev \
 		openssl-dev \
 		linux-headers \
-		luajit-dev \
 		libpng-dev \
 		freetype-dev \
 		libxpm-dev \
 		expat-dev \
 		tiff-dev \
 		libxcb-dev \
-		lua-dev \
 		pcre-dev \
 		geoip-dev \
 		gd-dev \
@@ -68,24 +62,50 @@ RUN : \
 	# add build pkg
 	&& nginx_ct_version=1.3.2 \
 	&& ngx_cache_purge_version=2.3 \
-	&& ngx_brotli_version=c05e753cbc30350ebb3e7cae29aec64a3733875a \
-	&& naxsi_version=0.56 \
+	&& ngx_brotli_version=1.0.0rc \
+	&& naxsi_version=1.1a \
 	&& nps_version=1.13.35.2 \
 	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
-	&& brotli_version=1.0.7 \
+	&& brotli_version=1.0.9 \
 	&& naxsi_tarball_name=naxsi \
+    && headers_more_module_version=0.33 \
+    && vts_version=0.1.18 \
+    && lua_nginx_version=0.10.17 \
 	&& lua_nginx_module_name=lua-nginx-module \
 	&& ngx_devel_kit_version=0.3.1 \
-	&& LUAJIT_VERSION=2.1.0-beta3 \
-	&& LUA_VERSION=2.1 \
-	&& lua_nginx_module_version=0.10.15 \
+    && nginx_shibboleth_version=2.0.1 \
+	&& lua_nginx_module_version=0.10.17 \
+	&& lua_resty_core_version=0.1.19 \
+	&& lua_resty_lrucache_version=0.10 \
+	&& luajit_fork_version=2.1-20200102 \
+	&& stream_lua_nginx_version=0.0.8 \
 	&& CT_SUBMIT_VERSION=1.1.2 \
-	&& export LUAJIT_LIB=/usr/lib \
-	&& export LUAJIT_INC=/usr/include/luajit-$LUA_VERSION \
-	&& CC=/usr/bin/cc \
-	&& CXX=/usr/bin/c++ \
 	&& apk add --no-cache --virtual .builddep $NGINX_DEPS \
+	&& mkdir /tmp/build \
 	&& cd /tmp/build \
+# lua resty config
+\
+	&& export PREFIX=/usr \
+	&& export LUA_LIB_DIR=/usr/share/lua/5.1 \
+	&& curl -fSLO https://github.com/openresty/lua-resty-core/archive/v${lua_resty_core_version}.tar.gz \
+	&& tar xf v${lua_resty_core_version}.tar.gz \
+	&& (cd lua-resty-core-${lua_resty_core_version} \
+		&& make install && ls -lR /usr/local/share ) \
+	&& curl -fSLO https://github.com/openresty/lua-resty-lrucache/archive/v${lua_resty_lrucache_version}.tar.gz \
+	&& tar xf v${lua_resty_lrucache_version}.tar.gz \
+	&& (cd lua-resty-lrucache-${lua_resty_lrucache_version} && make install && ls -lR /usr/local/share ) \
+\
+# luafork
+	&& curl -fSLO https://github.com/openresty/luajit2/archive/v${luajit_fork_version}.tar.gz \
+	&& tar xf v${luajit_fork_version}.tar.gz \
+	&& (cd luajit2-${luajit_fork_version} \
+        && sed -i -e 's,/usr/local,/usr,' Makefile \
+        && sed -i -e 's,/usr/local,/usr,' -e 's,LUA_LMULTILIB\t"lib",LUA_LMULTILIB "lib64",' src/luaconf.h \
+		&& make install DESTDIR=/tmp/build \
+		&& rm /tmp/build/usr/lib/*.so ) \
+\
+# nginx 
+\
 	&& curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
 	&& curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc -o nginx.tar.gz.asc \
 	&& export GNUPGHOME="$(mktemp -d)" \
@@ -106,14 +126,28 @@ RUN : \
 	&& tar xf nginx.tar.gz \
 	&& mkdir nginx-${NGINX_VERSION}/extensions \
 	&& cd ./nginx-${NGINX_VERSION}/extensions \
-	&& curl -Lo nginx-ct-${nginx_ct_version}.tar.gz https://github.com/grahamedgecombe/nginx-ct/archive/v${nginx_ct_version}.tar.gz \
-	&& curl -Lo ngx_cache_purge-${ngx_cache_purge_version}.tar.gz https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz \
-	&& curl -Lo ngx_brotli-${ngx_brotli_version}.tar.gz https://github.com/google/ngx_brotli/archive/${ngx_brotli_version}.tar.gz \
-	&& curl -Lo brotli-${brotli_version}.tar.gz https://github.com/google/brotli/archive/v${brotli_version}.tar.gz \
-	&& curl -Lo ngx_devel_kit-${ngx_devel_kit_version}.tar.gz https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz \
-	&& curl -Lo ${lua_nginx_module_name}-${lua_nginx_module_version}.tar.gz https://github.com/openresty/${lua_nginx_module_name}/archive/v${lua_nginx_module_version}.tar.gz \
-	&& curl -Lo ${naxsi_tarball_name}-${naxsi_version}.tar.gz https://github.com/nbs-system/naxsi/archive/${naxsi_version}.tar.gz \
-\
+	&& curl -fSLo nginx-ct-${nginx_ct_version}.tar.gz \
+        https://github.com/grahamedgecombe/nginx-ct/archive/v${nginx_ct_version}.tar.gz \
+	&& curl -fSLo ngx_cache_purge-${ngx_cache_purge_version}.tar.gz  \
+        https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz \
+	&& curl -fSLo ngx_brotli-${ngx_brotli_version}.tar.gz \
+        https://github.com/google/ngx_brotli/archive/v${ngx_brotli_version}.tar.gz \
+	&& curl -fSLo brotli-${brotli_version}.tar.gz \
+        https://github.com/google/brotli/archive/v${brotli_version}.tar.gz \
+	&& curl -fSLo ngx_devel_kit-${ngx_devel_kit_version}.tar.gz \
+        https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz \
+    && curl -fSLo nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
+        https://github.com/nginx-shib/nginx-http-shibboleth/archive/v${nginx_shibboleth_version}.tar.gz \
+    && curl -fSLo headers-more-nginx-module-${headers_more_module_version}.tar.gz \
+        https://github.com/openresty/headers-more-nginx-module/archive/v${headers_more_module_version}.tar.gz \
+    && curl -fSLo nginx-module-vts-${vts_version}.tar.gz \
+        https://github.com/vozlt/nginx-module-vts/archive/v${vts_version}.tar.gz \
+	&& curl -fSLo ${lua_nginx_module_name}-${lua_nginx_module_version}.tar.gz \
+        https://github.com/openresty/${lua_nginx_module_name}/archive/v${lua_nginx_module_version}.tar.gz \
+	&& curl -fSLo ${naxsi_tarball_name}-${naxsi_version}.tar.gz \
+        https://github.com/nbs-system/naxsi/archive/${naxsi_version}.tar.gz \
+	&& curl -fSLo stream_lua_nginx-${stream_lua_nginx_version}.tar.gz \
+        https://github.com/openresty/stream-lua-nginx-module/archive/v${stream_lua_nginx_version}.tar.gz \
 	&& tar xf nginx-ct-${nginx_ct_version}.tar.gz \
 	&& mv nginx-ct-${nginx_ct_version} nginx-ct \
 	&& tar xf ngx_cache_purge-${ngx_cache_purge_version}.tar.gz \
@@ -129,11 +163,21 @@ RUN : \
 	&& tar xf brotli-${brotli_version}.tar.gz \
 	&& (test -d ngx_brotli/deps/brotli && rmdir ngx_brotli/deps/brotli) \
 	&& mv brotli-${brotli_version} ngx_brotli/deps/brotli \
-	&& cd .. \
-	&& patch -p1 < ../fast_cgiparams_CVE-2016-5387.patch \
+    && tar xf nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
+    && mv nginx-http-shibboleth-${nginx_shibboleth_version} nginx-http-shibboleth \
+    && tar xf headers-more-nginx-module-${headers_more_module_version}.tar.gz \
+    && mv headers-more-nginx-module-${headers_more_module_version} headers-more-nginx-module \
+    && tar xf nginx-module-vts-${vts_version}.tar.gz \
+    && mv nginx-module-vts-${vts_version} nginx-module-vts \
+	&& tar xf stream_lua_nginx-${stream_lua_nginx_version}.tar.gz \
+	&& mv stream-lua-nginx-module-${stream_lua_nginx_version} stream-lua-nginx-module \
+    && cd .. \
 \
 # configure
-	&& cd /tmp/build/nginx-${NGINX_VERSION} \  
+    && export LUAJIT_INC=/tmp/build/usr/include/luajit-2.1 \
+    && export LUAJIT_LIB=/tmp/build/usr/lib \
+	&& CC=/usr/bin/cc \
+	&& CXX=/usr/bin/c++ \
 	&& CONF="\
 		--prefix=/etc/nginx \
 		--conf-path=/etc/nginx/nginx.conf \
@@ -181,12 +225,19 @@ RUN : \
 		--with-http_image_filter_module \
 		--with-http_geoip_module \
 		--with-http_perl_module \
+        --with-pcre-jit \
+        --with-stream \
+        --with-stream_ssl_module \
 		--add-module=./extensions/ngx_devel_kit \
 		--add-module=./extensions/${lua_nginx_module_name} \
 		--add-module=./extensions/ngx_cache_purge \
 		--add-module=./extensions/nginx-ct \
 		--add-module=./extensions/ngx_brotli \
 		--add-module=./extensions/${naxsi_tarball_name}/naxsi_src \
+        --add-module=./extensions/nginx-http-shibboleth \
+        --add-module=./extensions/headers-more-nginx-module \
+        --add-module=./extensions/nginx-module-vts \
+		--add-module=./extensions/stream-lua-nginx-module \
 	" \
 	&& CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
 		-fexceptions -fstack-protector \
@@ -209,7 +260,7 @@ RUN : \
 	&& mv /usr/bin/envsubst /tmp/ \
 \
 # add ct-submit
-	&& curl -LO https://raw.githubusercontent.com/grahamedgecombe/ct-submit/v${CT_SUBMIT_VERSION}/ct-submit.go \
+	&& curl -fSLO https://raw.githubusercontent.com/grahamedgecombe/ct-submit/v${CT_SUBMIT_VERSION}/ct-submit.go \
 	&& go build ct-submit.go \
 	&& cp ct-submit /tmp \
 \
@@ -245,6 +296,7 @@ RUN : \
 
 COPY files/nginx.conf /etc/nginx/nginx.conf
 COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
+COPY files/fastcgi_params /etc/nginx/fastcgi_params
 COPY files/naxsi.d/ /etc/nginx/naxsi.d/
 COPY files/templates/ /etc/nginx/conf.d/
 COPY files/security.conf /etc/nginx/conf.d/security.conf
@@ -266,7 +318,7 @@ RUN if [ x${MICROSCANNER_TOKEN} != x ] ; then \
 	&& ./microscanner ${MICROSCANNER_TOKEN} || exit 1\
 	&& rm ./microscanner \
 	&& apk del --purge .ca ;\
-    fi
+	fi
 
 EXPOSE 8080
 EXPOSE 8443
