@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM alpine:3.12
+FROM alpine:3.12.1
 MAINTAINER kusanagi@prime-strategy.co.jp
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -63,18 +63,17 @@ RUN : \
 	&& nginx_ct_version=1.3.2 \
 	&& ngx_cache_purge_version=2.3 \
 	&& ngx_brotli_version=1.0.0rc \
-	&& naxsi_version=1.1a \
+	&& naxsi_version=1.3 \
 	&& nps_version=1.13.35.2 \
 	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& brotli_version=1.0.9 \
 	&& naxsi_tarball_name=naxsi \
 	&& headers_more_module_version=0.33 \
 	&& vts_version=0.1.18 \
-	&& lua_nginx_version=0.10.17 \
 	&& lua_nginx_module_name=lua-nginx-module \
 	&& ngx_devel_kit_version=0.3.1 \
 	&& nginx_shibboleth_version=2.0.1 \
-	&& lua_nginx_module_version=0.10.17 \
+	&& lua_nginx_module_version=0.10.19 \
 	&& lua_resty_core_version=0.1.19 \
 	&& lua_resty_lrucache_version=0.10 \
 	&& luajit_fork_version=2.1-20200102 \
@@ -308,17 +307,6 @@ RUN cd /etc/nginx/ \
 	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
 	&& apk add --no-cache tzdata openssl \
 	&& : # END of RUN
-
-ARG MICROSCANNER_TOKEN
-RUN if [ x${MICROSCANNER_TOKEN} != x ] ; then \
-	apk add --no-cache --virtual .ca ca-certificates \
-	&& update-ca-certificates\
-	&& wget --no-check-certificate https://get.aquasec.com/microscanner \
-	&& chmod +x microscanner \
-	&& ./microscanner ${MICROSCANNER_TOKEN} || exit 1\
-	&& rm ./microscanner \
-	&& apk del --purge .ca ;\
-	fi
 
 EXPOSE 8080
 EXPOSE 8443
