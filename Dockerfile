@@ -74,10 +74,10 @@ RUN : \
     && ngx_devel_kit_version=0.3.1 \
     && nginx_shibboleth_version=2.0.1 \
     && lua_nginx_module_version=0.10.19 \
-    && lua_resty_core_version=0.1.19 \
+    && lua_resty_core_version=0.1.21 \
     && lua_resty_lrucache_version=0.10 \
-    && luajit_fork_version=2.1-20200102 \
-    && stream_lua_nginx_version=0.0.8 \
+    && luajit_fork_version=2.1-20201027 \
+    && stream_lua_nginx_version=0.0.9 \
     && CT_SUBMIT_VERSION=1.1.2 \
     && apk upgrade musl-utils \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
