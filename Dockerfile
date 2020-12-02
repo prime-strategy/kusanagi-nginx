@@ -20,7 +20,7 @@ RUN : \
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.19.3
+ENV NGINX_VERSION=1.19.5
 ENV NGINX_DEPS gnupg1 \
         gcc \
         g++ \
@@ -79,6 +79,7 @@ RUN : \
     && luajit_fork_version=2.1-20200102 \
     && stream_lua_nginx_version=0.0.8 \
     && CT_SUBMIT_VERSION=1.1.2 \
+    && apk upgrade musl-utils \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
@@ -307,6 +308,12 @@ RUN cd /etc/nginx/ \
     && ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
     && apk add --no-cache tzdata openssl \
     && : # END of RUN
+
+RUN apk add --no-cache --virtual .curl curl \
+    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin \
+    && trivy filesystem --exit-code 1 --no-progress / \
+    && apk del .curl \
+    && :
 
 EXPOSE 8080
 EXPOSE 8443
