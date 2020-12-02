@@ -79,6 +79,7 @@ RUN : \
 	&& luajit_fork_version=2.1-20200102 \
 	&& stream_lua_nginx_version=0.0.8 \
 	&& CT_SUBMIT_VERSION=1.1.2 \
+	&& apk upgrade musl-tools \
 	&& apk add --no-cache --virtual .builddep $NGINX_DEPS \
 	&& mkdir /tmp/build \
 	&& cd /tmp/build \
@@ -313,6 +314,12 @@ EXPOSE 8443
 
 VOLUME /home/kusanagi
 VOLUME /etc/letsencrypt
+
+RUN apk add --no-cache --virtual .curl curl \
+    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin \
+    && trivy filesystem --exit-code 1 --no-progress / \
+    && apk del .curl \
+    && :
 
 USER httpd
 COPY files/docker-entrypoint.sh /
