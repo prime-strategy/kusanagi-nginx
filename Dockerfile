@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM alpine:3.12.1
+FROM alpine:3.12.3
 MAINTAINER kusanagi@prime-strategy.co.jp
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -20,7 +20,7 @@ RUN : \
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.19.5
+ENV NGINX_VERSION=1.19.6
 ENV NGINX_DEPS gnupg1 \
         gcc \
         g++ \
