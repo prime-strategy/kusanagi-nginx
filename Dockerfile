@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM alpine:3.12.3
+FROM alpine:3.13.2
 MAINTAINER kusanagi@prime-strategy.co.jp
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -20,7 +20,7 @@ RUN : \
 COPY files/add_dev.sh /usr/local/bin
 COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.19.6
+ENV NGINX_VERSION=1.19.7
 ENV NGINX_DEPS gnupg1 \
         gcc \
         g++ \
@@ -53,31 +53,31 @@ ENV NGINX_DEPS gnupg1 \
         util-linux-dev \
         zlib-dev \
         go \
-        gnupg \
+        gnupg1 \
         gettext
 
 # prep
 RUN : \
+    && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 \
     # add build pkg
     && nginx_ct_version=1.3.2 \
     && ngx_cache_purge_version=2.3 \
     && ngx_brotli_version=1.0.0rc \
+    && naxsi_tarball_name=naxsi \
     && naxsi_version=1.3 \
     && nps_version=1.13.35.2 \
-    && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
-    && brotli_version=1.0.9 \
-    && naxsi_tarball_name=naxsi \
-    && headers_more_module_version=0.33 \
-    && vts_version=0.1.18 \
-    && lua_nginx_module_name=lua-nginx-module \
-    && ngx_devel_kit_version=0.3.1 \
     && nginx_shibboleth_version=2.0.1 \
+    && headers_more_module_version=0.33 \
+    && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.19 \
+    && vts_version=0.1.18 \
+    && ngx_devel_kit_version=0.3.1 \
     && lua_resty_core_version=0.1.21 \
     && lua_resty_lrucache_version=0.10 \
-    && luajit_fork_version=2.1-20201027 \
+    && luajit_fork_version=2.1-20201229 \
     && stream_lua_nginx_version=0.0.9 \
+    && brotli_version=1.0.9 \
     && CT_SUBMIT_VERSION=1.1.2 \
     && apk upgrade musl-utils \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \

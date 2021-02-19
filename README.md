@@ -5,18 +5,18 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 # Versions (tags)
 
 - latest
-- 1.19.6-r0
+- 1.19.7-r0
 
 # Image Content
 
-- Alpine:3.12.3
-- nginx-1.19.6
+- Alpine:3.13.2
+- nginx-1.19.7
 - headers-more-nginx-module 0.33
 - lua-nginx-module 0.10.19
 - lua_resty_core_version 0.1.21
 - lua_resty_lrucache_version 0.10
-- luajit_fork_version 2.1-20201027
-- stream_lua_nginx_version 0.0.8
+- luajit_fork_version 2.1-20201229
+- stream_lua_nginx_version 0.0.9
 - naxsi 1.3
 - nginx-ct 1.3.2
 - nginx-http-shibboleth 2.0.1
@@ -26,5 +26,4 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 - ngx_cache_purge 2.3
 - ngx_devel_kit 0.3.1
 - nps_version 1.13.35.2
-- nginx_shibboleth_version 2.0.1
 
