@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM alpine:3.12.3
+FROM alpine:3.13.2
 MAINTAINER kusanagi@prime-strategy.co.jp
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -53,7 +53,7 @@ ENV NGINX_DEPS gnupg1 \
 		util-linux-dev \
 		zlib-dev \
 		go \
-		gnupg \
+		gnupg1 \
 		gettext
 
 # prep
@@ -79,7 +79,7 @@ RUN : \
 	&& luajit_fork_version=2.1-20201027 \
 	&& stream_lua_nginx_version=0.0.9 \
 	&& CT_SUBMIT_VERSION=1.1.2 \
-	&& apk upgrade musl-tools \
+	&& apk upgrade musl-utils \
 	&& apk add --no-cache --virtual .builddep $NGINX_DEPS \
 	&& mkdir /tmp/build \
 	&& cd /tmp/build \
