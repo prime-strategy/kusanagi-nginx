@@ -39,8 +39,8 @@ cd /etc/nginx/conf.d \
     USE_SSL_CT=${USE_SSL_CT:-off} \
     USE_SSL_OSCP=${USE_SSL_OSCP:-off} \
     OSCP_RESOLV=${OSCP_RESOLV} \
-    SSL_CERT=${SSL_CERT:-/etc/nginx/localhost.crt} \
-    SSL_KEY=${SSL_KEY:-/etc/nginx/localhost.key} \
+    SSL_CERT=${SSL_CERT:-/etc/nginx/default.crt} \
+    SSL_KEY=${SSL_KEY:-/etc/nginx/default.key} \
     /usr/bin/envsubst '$$FQDN $$DOCUMENTROOT $$NO_SSL_REDIRECT
     $$NO_USE_FCACHE $$EXPIRE_DAYS $$USE_SSL_CT $$USE_SSL_OSCP
     $$SSL_CERT $$SSL_KEY $$OSCP_RESOLV $$KUSANAGI_PROVISION' \
@@ -65,14 +65,14 @@ env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 #//---------------------------------------------------------------------------
 #// create self-signed cert
 #//---------------------------------------------------------------------------
-if [ -f /etc/nginx/localhost.key -o -f /etc/nginx/localhost.crt ]; then
+if [ -f /etc/nginx/default.key -o -f /etc/nginx/default.crt ]; then
 	/bin/true
 else
-	openssl genrsa -rand /proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime 2048 > /etc/nginx/localhost.key 2> /dev/null
+	openssl genrsa -rand /proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime 2048 > /etc/nginx/default.key 2> /dev/null
 
-	cat <<-EOF | openssl req -new -key /etc/nginx/localhost.key \
+	cat <<-EOF | openssl req -new -key /etc/nginx/default.key \
 		-x509 -sha256 -days 365 -set_serial 1 -extensions v3_req \
-		-out /etc/nginx/localhost.crt 2>/dev/null
+		-out /etc/nginx/default.crt 2>/dev/null
 --
 SomeState
 SomeCity
