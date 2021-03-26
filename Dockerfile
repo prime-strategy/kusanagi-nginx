@@ -1,24 +1,18 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM alpine:3.13.2
-MAINTAINER kusanagi@prime-strategy.co.jp
+FROM golang:1.16.0-buster as build-go
+RUN : \
+    && CT_SUBMIT_VERSION=1.1.2 \
+    && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
+
+FROM alpine:3.13.3
+LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-# add user
-RUN : \
-	&& apk add --no-cache --virtual .user shadow \
-	&& groupadd -g 1001 www \
-	&& useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
-	&& groupadd -g 1000 kusanagi \
-	&& useradd -d /home/kusanagi -s /bin/nologin -g kusanagi -G www -u 1000 -m kusanagi \
-	&& chmod 755 /home/kusanagi \
-	&& apk del --purge .user \
-	&& : # END of RUN
-
-COPY files/add_dev.sh /usr/local/bin
-COPY files/del_dev.sh /usr/local/bin
+#COPY files/add_dev.sh /usr/local/bin
+#COPY files/del_dev.sh /usr/local/bin
 
 ENV NGINX_VERSION=1.18.0
 ENV NGINX_DEPS gnupg1 \
@@ -52,12 +46,22 @@ ENV NGINX_DEPS gnupg1 \
 		libuuid \
 		util-linux-dev \
 		zlib-dev \
-		go \
 		gnupg1 \
 		gettext
 
-# prep
+COPY files/ct-submit.sh /usr/bin/ct-submit.sh
+COPY --from=build-go /go/bin/ct-submit /usr/bin/ct-submit
+
 RUN : \
+\
+    # add user
+	&& apk add --no-cache --virtual .user shadow \
+	&& groupadd -g 1001 www \
+	&& useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
+	&& groupadd -g 1000 kusanagi \
+	&& useradd -d /home/kusanagi -s /bin/nologin -g kusanagi -G www -u 1000 -m kusanagi \
+	&& chmod 755 /home/kusanagi \
+	&& apk del --purge .user \
 \
 	# add build pkg
 	&& nginx_ct_version=1.3.2 \
@@ -76,9 +80,8 @@ RUN : \
 	&& lua_nginx_module_version=0.10.19 \
 	&& lua_resty_core_version=0.1.21 \
 	&& lua_resty_lrucache_version=0.10 \
-	&& luajit_fork_version=2.1-20201027 \
+	&& luajit_fork_version=2.1-20201229 \
 	&& stream_lua_nginx_version=0.0.9 \
-	&& CT_SUBMIT_VERSION=1.1.2 \
 	&& apk upgrade musl-utils \
 	&& apk add --no-cache --virtual .builddep $NGINX_DEPS \
 	&& mkdir /tmp/build \
@@ -259,24 +262,17 @@ RUN : \
 	&& (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
 	&& mv /usr/bin/envsubst /tmp/ \
 \
-# add ct-submit
-	&& curl -fSLO https://raw.githubusercontent.com/grahamedgecombe/ct-submit/v${CT_SUBMIT_VERSION}/ct-submit.go \
-	&& go build ct-submit.go \
-	&& cp ct-submit /tmp \
-\
 # remove pkg
 	&& runDeps="$( \
-		scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst /tmp/ct-submit \
+		scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst \
 			| tr ',' '\n' \
 			| sort -u \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)" \
-	&& apk add --no-cache --virtual .nginx-rundeps $runDeps \
+	&& apk add --no-cache --virtual .nginx-rundeps $runDeps tzdata openssl \
 	&& apk del --purge .builddep \
 \
 	&& mv /tmp/envsubst /usr/bin/envsubst \
-	&& mv /tmp/ct-submit /usr/bin/ct-submit \
-	&& chmod 700 /usr/bin/ct-submit \
 	\
 # setup configures
 	&& mkdir -p -m755 /var/www/html \
@@ -292,6 +288,8 @@ RUN : \
 	&& install -m644 /etc/nginx/html/index.html /var/www/html \
 	&& mkdir -p -m755 /etc/nginx/scts /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
 	&& rm -rf /tmp/build \
+	&& chmod 700 /usr/bin/ct-submit /usr/bin/ct-submit.sh\
+	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
 	&& : # END of RUN
 
 COPY files/nginx.conf /etc/nginx/nginx.conf
@@ -300,20 +298,11 @@ COPY files/fastcgi_params /etc/nginx/fastcgi_params
 COPY files/naxsi.d/ /etc/nginx/naxsi.d/
 COPY files/templates/ /etc/nginx/conf.d/
 COPY files/security.conf /etc/nginx/conf.d/security.conf
-COPY files/ct-submit.sh /usr/bin/ct-submit.sh
-
-# forward request and error logs to docker log collector
-RUN cd /etc/nginx/ \
-	&& chmod 700 /usr/bin/ct-submit.sh \
-	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
-	&& apk add --no-cache tzdata openssl \
-	&& : # END of RUN
 
 EXPOSE 8080
 EXPOSE 8443
 
 VOLUME /home/kusanagi
-VOLUME /etc/letsencrypt
 
 RUN apk add --no-cache --virtual .curl curl \
     && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin \
