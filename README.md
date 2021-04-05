@@ -9,7 +9,7 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 
 # Image Content
 
-- Alpine:3.13.3
+- Alpine:3.13.4
 - nginx-1.19.9
 - headers-more-nginx-module 0.33
 - lua-nginx-module 0.10.19
