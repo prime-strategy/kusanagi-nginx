@@ -14,7 +14,7 @@ ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 #COPY files/add_dev.sh /usr/local/bin
 #COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.19.9
+ENV NGINX_VERSION=1.19.10
 ENV NGINX_DEPS gnupg1 \
         gcc \
         g++ \
@@ -61,10 +61,12 @@ RUN : \
     && useradd -d /home/kusanagi -s /bin/nologin -g kusanagi -G www -u 1000 -m kusanagi \
     && chmod 755 /home/kusanagi \
     && apk del --purge .user \
-    && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
+    && apk upgrade apk-tools \
+    # prep
 \
-# prep
+    && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     # add build pkg
+\
     && nginx_ct_version=1.3.2 \
     && ngx_cache_purge_version=2.3 \
     && ngx_brotli_version=1.0.0rc \
