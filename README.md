@@ -5,11 +5,11 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 # Versions (tags)
 
 - latest
-- 1.19.10-r0
+- 1.19.10-r1
 
 # Image Content
 
-- Alpine:3.13.4
+- Alpine:3.13.5
 - nginx-1.19.10
 - headers-more-nginx-module 0.33
 - lua-nginx-module 0.10.19
