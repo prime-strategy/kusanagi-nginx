@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM golang:1.16.0-buster as build-go
+FROM golang:1.16.4-buster as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
@@ -14,7 +14,7 @@ ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 #COPY files/add_dev.sh /usr/local/bin
 #COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.19.10
+ENV NGINX_VERSION=1.20.0
 ENV NGINX_DEPS gnupg1 \
         gcc \
         g++ \
@@ -80,7 +80,7 @@ RUN : \
     && ngx_devel_kit_version=0.3.1 \
     && lua_resty_core_version=0.1.21 \
     && lua_resty_lrucache_version=0.10 \
-    && luajit_fork_version=2.1-20201229 \
+    && luajit_fork_version=2.1-20210510 \
     && stream_lua_nginx_version=0.0.9 \
     && brotli_version=1.0.9 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
@@ -298,11 +298,13 @@ COPY files/fastcgi_params /etc/nginx/fastcgi_params
 COPY files/naxsi.d/ /etc/nginx/naxsi.d/
 COPY files/templates/ /etc/nginx/conf.d/
 COPY files/security.conf /etc/nginx/conf.d/security.conf
+COPY files/docker-entrypoint.sh /
 
 RUN apk add --no-cache --virtual .curl curl \
     && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin \
     && trivy filesystem --exit-code 1 --no-progress / \
     && apk del .curl \
+    && rm /usr/local/bin/trivy \
     && :
 
 EXPOSE 8080
@@ -311,6 +313,5 @@ EXPOSE 8443
 VOLUME /home/kusanagi
 
 USER httpd
-COPY files/docker-entrypoint.sh /
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
