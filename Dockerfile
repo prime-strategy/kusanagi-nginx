@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM golang:1.16.0-buster as build-go
+FROM golang:1.16.4-buster as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
@@ -80,7 +80,7 @@ RUN : \
     && ngx_devel_kit_version=0.3.1 \
     && lua_resty_core_version=0.1.21 \
     && lua_resty_lrucache_version=0.10 \
-    && luajit_fork_version=2.1-20201229 \
+    && luajit_fork_version=2.1-20210510 \
     && stream_lua_nginx_version=0.0.9 \
     && brotli_version=1.0.9 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
@@ -303,6 +303,7 @@ RUN apk add --no-cache --virtual .curl curl \
     && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin \
     && trivy filesystem --exit-code 1 --no-progress / \
     && apk del .curl \
+    && rm /usr/local/bin/trivy \
     && :
 
 EXPOSE 8080
