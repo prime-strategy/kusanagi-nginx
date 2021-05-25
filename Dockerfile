@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM golang:1.16.0-buster as build-go
+FROM golang:1.16.4-buster as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
@@ -307,6 +307,7 @@ RUN apk add --no-cache --virtual .curl curl \
     && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin \
     && trivy filesystem --exit-code 1 --no-progress / \
     && apk del .curl \
+    && rm /usr/local/bin/trivy \
     && :
 
 USER httpd
