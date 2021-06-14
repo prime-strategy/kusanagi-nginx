@@ -19,9 +19,9 @@ libpng-1.6.37-r1
 libssl1.1-1.1.1k-r0
 libtls-standalone-2.9.1-r1
 libwebp-1.1.0-r0
-libxml2-2.9.10-r6
+libxml2-2.9.10-r7
 libxslt-1.1.34-r0
-musl-1.2.2-r0
+musl-1.2.2-r1
 musl-utils-1.2.2-r0
 openssl-1.1.1k-r0
 pcre-8.44-r0
