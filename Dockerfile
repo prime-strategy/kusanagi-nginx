@@ -51,6 +51,7 @@ ENV NGINX_DEPS gnupg1 \
 
 COPY files/ct-submit.sh /usr/bin/ct-submit.sh
 COPY --from=build-go /go/bin/ct-submit /usr/bin/ct-submit
+COPY files/CVE-2021-23017.patch /tmp/CVE-2021-23017.patch
 
 RUN : \
 \
@@ -126,6 +127,7 @@ RUN : \
 	gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
 	&& rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
 	&& tar xf nginx.tar.gz \
+    && ( cd ./nginx-$NGINX_VERSION; patch -p1 < /tmp/CVE-2021-23017.patch) \
 	&& mkdir nginx-${NGINX_VERSION}/extensions \
 	&& cd ./nginx-${NGINX_VERSION}/extensions \
 	&& curl -fSLo nginx-ct-${nginx_ct_version}.tar.gz \
@@ -286,7 +288,7 @@ RUN : \
 	&& install -m644 /etc/nginx/html/50x.html /var/www/html \
 	&& install -m644 /etc/nginx/html/index.html /var/www/html \
 	&& mkdir -p -m755 /etc/nginx/scts /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
-	&& rm -rf /tmp/build \
+	&& rm -rf /tmp/build /tmp/CVE-2021-23017.patch \
 	&& chmod 700 /usr/bin/ct-submit /usr/bin/ct-submit.sh\
 	&& ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
 	&& : # END of RUN
