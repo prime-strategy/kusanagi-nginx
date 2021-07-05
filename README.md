@@ -9,7 +9,7 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 
 # Image Content
 
-- Alpine:3.14.0
+- Alpine:3.13.5
 - nginx-1.21.1
 - nginx-ct 1.3.2
 - ngx_cache_purge 2.3
