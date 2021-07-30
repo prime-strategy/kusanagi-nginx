@@ -6,7 +6,7 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.13.5
+FROM alpine:3.14.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -84,6 +84,7 @@ RUN : \
     && luajit_fork_version=2.1-20210510 \
     && stream_lua_nginx_version=0.0.10 \
     && brotli_version=1.0.9 \
+    && apk upgrade apk-tools \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
