@@ -6,7 +6,7 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.13.5
+FROM alpine:3.14.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -75,14 +75,15 @@ RUN : \
     && nginx_shibboleth_version=2.0.1 \
     && headers_more_module_version=0.33 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.19 \
+    && lua_nginx_module_version=0.10.20 \
     && vts_version=0.1.18 \
     && ngx_devel_kit_version=0.3.1 \
-    && lua_resty_core_version=0.1.21 \
-    && lua_resty_lrucache_version=0.10 \
+    && lua_resty_core_version=0.1.22 \
+    && lua_resty_lrucache_version=0.11 \
     && luajit_fork_version=2.1-20210510 \
-    && stream_lua_nginx_version=0.0.9 \
+    && stream_lua_nginx_version=0.0.10 \
     && brotli_version=1.0.9 \
+    && apk upgrade apk-tools \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
