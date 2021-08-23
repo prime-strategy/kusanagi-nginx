@@ -6,7 +6,7 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.13.5
+FROM alpine:3.14.1
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -306,10 +306,10 @@ EXPOSE 8443
 VOLUME /home/kusanagi
 
 RUN apk add --no-cache --virtual .curl curl \
-    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin \
-    && trivy filesystem --exit-code 1 --no-progress / \
+    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /tmp/ \
+    && /tmp/trivy filesystem --skip-files /tmp/trivy --exit-code 1 --no-progress / \
     && apk del .curl \
-    && rm /usr/local/bin/trivy \
+    && rm /tmp/trivy \
     && :
 
 USER httpd
