@@ -6,7 +6,7 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.14.1
+FROM alpine:3.14.2
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
