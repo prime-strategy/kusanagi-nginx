@@ -1,12 +1,12 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM golang:1.16.4-buster as build-go
+FROM golang:1.17.5-bullseye as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.14.3
+FROM alpine:3.15.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -14,7 +14,7 @@ ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 #COPY files/add_dev.sh /usr/local/bin
 #COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.21.4
+ENV NGINX_VERSION=1.21.5
 ENV NGINX_DEPS gnupg1 \
         gcc \
         g++ \
