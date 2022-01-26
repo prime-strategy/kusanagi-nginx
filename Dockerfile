@@ -14,7 +14,7 @@ ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 #COPY files/add_dev.sh /usr/local/bin
 #COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.21.5
+ENV NGINX_VERSION=1.21.6
 ENV NGINX_DEPS gnupg1 \
         gcc \
         g++ \
@@ -39,6 +39,7 @@ ENV NGINX_DEPS gnupg1 \
         pcre-dev \
         geoip-dev \
         gd-dev \
+        brotli-dev \
         ruby-etc \
         ruby-dev \
         libxpm-dev \
@@ -81,9 +82,8 @@ RUN : \
     && ngx_devel_kit_version=0.3.1 \
     && lua_resty_core_version=0.1.22 \
     && lua_resty_lrucache_version=0.11 \
-    && luajit_fork_version=2.1-20210510 \
+    && luajit_fork_version=2.1-20220111 \
     && stream_lua_nginx_version=0.0.10 \
-    && brotli_version=1.0.9 \
     && apk upgrade apk-tools \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
@@ -137,8 +137,6 @@ RUN : \
         https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz \
     && curl -fSLo ngx_brotli-${ngx_brotli_version}.tar.gz \
         https://github.com/google/ngx_brotli/archive/v${ngx_brotli_version}.tar.gz \
-    && curl -fSLo brotli-${brotli_version}.tar.gz \
-        https://github.com/google/brotli/archive/v${brotli_version}.tar.gz \
     && curl -fSLo ngx_devel_kit-${ngx_devel_kit_version}.tar.gz \
         https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz \
     && curl -fSLo nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
@@ -165,9 +163,6 @@ RUN : \
     && mv ${lua_nginx_module_name}-${lua_nginx_module_version} ${lua_nginx_module_name} \
     && tar xf ${naxsi_tarball_name}-${naxsi_version}.tar.gz \
     && mv ${naxsi_tarball_name}-${naxsi_version} ${naxsi_tarball_name} \
-    && tar xf brotli-${brotli_version}.tar.gz \
-    && (test -d ngx_brotli/deps/brotli && rmdir ngx_brotli/deps/brotli) \
-    && mv brotli-${brotli_version} ngx_brotli/deps/brotli \
     && tar xf nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
     && mv nginx-http-shibboleth-${nginx_shibboleth_version} nginx-http-shibboleth \
     && tar xf headers-more-nginx-module-${headers_more_module_version}.tar.gz \
