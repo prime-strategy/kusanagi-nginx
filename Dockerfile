@@ -4,9 +4,9 @@
 FROM golang:1.17.3-bullseye as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
-    && go get github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
+    && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.14.3
+FROM alpine:3.15.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -80,7 +80,7 @@ RUN : \
     && ngx_devel_kit_version=0.3.1 \
     && lua_resty_core_version=0.1.22 \
     && lua_resty_lrucache_version=0.11 \
-    && luajit_fork_version=2.1-20210510 \
+    && luajit_fork_version=2.1-20220310 \
     && stream_lua_nginx_version=0.0.10 \
     && brotli_version=1.0.9 \
     && apk upgrade apk-tools \
