@@ -1,12 +1,12 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM golang:1.17.5-bullseye as build-go
+FROM golang:1.18.0-bullseye as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.15.1
+FROM alpine:3.15.4
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -68,8 +68,6 @@ RUN : \
     && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     # add build pkg
 \
-    && apk update \
-    && apk upgrade libretls \
     && nginx_ct_version=1.3.2 \
     && ngx_cache_purge_version=2.3 \
     && ngx_brotli_version=1.0.0rc \
