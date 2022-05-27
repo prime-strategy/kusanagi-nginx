@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM golang:1.18.0-bullseye as build-go
+FROM golang:1.18.2-bullseye as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
@@ -14,8 +14,8 @@ ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 #COPY files/add_dev.sh /usr/local/bin
 #COPY files/del_dev.sh /usr/local/bin
 
-ENV NGINX_VERSION=1.21.6
-ENV NGINX_DEPS gnupg1 \
+ENV NGINX_VERSION=1.22.0
+ENV NGINX_DEPS gnupg1 ca-certificates \
         gcc \
         g++ \
         make  \
@@ -47,7 +47,6 @@ ENV NGINX_DEPS gnupg1 \
         libuuid \
         util-linux-dev \
         zlib-dev \
-        gnupg1 \
         gettext
 
 COPY files/ct-submit.sh /usr/bin/ct-submit.sh
@@ -55,6 +54,7 @@ COPY --from=build-go /go/bin/ct-submit /usr/bin/ct-submit
 
 # add user
 RUN : \
+    # prep
     && apk update \
     && apk add --no-cache --virtual .user shadow \
     && groupadd -g 1001 www \
@@ -63,11 +63,7 @@ RUN : \
     && useradd -d /home/kusanagi -s /bin/nologin -g kusanagi -G www -u 1000 -m kusanagi \
     && chmod 755 /home/kusanagi \
     && apk del --purge .user \
-    # prep
-\
-    && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     # add build pkg
-\
     && nginx_ct_version=1.3.2 \
     && ngx_cache_purge_version=2.3 \
     && ngx_brotli_version=1.0.0rc \
@@ -77,13 +73,13 @@ RUN : \
     && nginx_shibboleth_version=2.0.1 \
     && headers_more_module_version=0.33 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.20 \
+    && lua_nginx_module_version=0.10.21 \
     && vts_version=0.1.18 \
     && ngx_devel_kit_version=0.3.1 \
-    && lua_resty_core_version=0.1.22 \
+    && lua_resty_core_version=0.1.23 \
     && lua_resty_lrucache_version=0.11 \
-    && luajit_fork_version=2.1-20220310 \
-    && stream_lua_nginx_version=0.0.10 \
+    && luajit_fork_version=2.1-20220411 \
+    && stream_lua_nginx_version=0.0.11 \
     && apk upgrade apk-tools \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
@@ -110,24 +106,25 @@ RUN : \
         && rm /tmp/build/usr/lib/*.so ) \
 \
 # nginx 
+#   && GPG_KEYS=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
+#	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 \
     && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
-    && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc -o nginx.tar.gz.asc \
-    && export GNUPGHOME="$(mktemp -d)" \
-    && found=''; \
-    for server in \
-        keys.gnupg.net \
-        ha.pool.sks-keyservers.net \
-        hkp://keyserver.ubuntu.com:80 \
-        hkp://p80.pool.sks-keyservers.net:80 \
-        pgp.mit.edu \
-    ; do \
-        echo "Fetching GPG key $GPG_KEYS from $server"; \
-        gpg --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$GPG_KEYS" && found=yes && break; \
-    done; \
-    test -z "$found" && echo >&2 "error: failed to fetch GPG key $GPG_KEYS" && exit 1; \
-    gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
-    && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
+\
+#    && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc -o nginx.tar.gz.asc \
+#    && export GNUPGHOME="$(mktemp -d)" \
+#    && found=''; \
+#    for server in \
+#		hkp://keyserver.ubuntu.com:80 \
+#		pgp.mit.edu \
+#    ; do \
+#        echo "Fetching GPG key $GPG_KEYS from $server"; \
+#        gpg --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$GPG_KEYS" && found=yes && break; \
+#    done; \
+#    test -z "$found" && echo >&2 "error: failed to fetch GPG key $GPG_KEYS" && exit 1; \
+#    gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
+#    && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
+\
     && tar xf nginx.tar.gz \
     && mkdir nginx-${NGINX_VERSION}/extensions \
     && cd ./nginx-${NGINX_VERSION}/extensions \
