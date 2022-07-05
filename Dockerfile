@@ -1,12 +1,12 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM golang:1.18.2-bullseye as build-go
+FROM --platform=$BUILDPLATFORM golang:1.18.2-bullseye as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.15.4
+FROM --platform=$BUILDPLATFORM alpine:3.16.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -15,7 +15,8 @@ ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 #COPY files/del_dev.sh /usr/local/bin
 
 ENV NGINX_VERSION=1.22.0
-ENV NGINX_DEPS gnupg1 ca-certificates \
+ENV NGINX_DEPS gnupg \
+        ca-certificates \
         gcc \
         g++ \
         make  \
@@ -276,7 +277,6 @@ RUN : \
         /var/www/html \
         /var/cache/nginx \
         /var/log/nginx \
-        /etc/hosts \
     && install -m644 /etc/nginx/html/50x.html /var/www/html \
     && install -m644 /etc/nginx/html/index.html /var/www/html \
     && mkdir -p -m755 /etc/nginx/scts /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
