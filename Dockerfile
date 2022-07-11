@@ -1,12 +1,12 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM golang:1.18.0-bullseye as build-go
+FROM --platform=$BUILDPLATFORM golang:1.18.0-bullseye as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.15.4
+FROM --platform=$BUILDPLATFORM alpine:3.16.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -15,7 +15,7 @@ ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 #COPY files/del_dev.sh /usr/local/bin
 
 ENV NGINX_VERSION=1.20.2
-ENV NGINX_DEPS gnupg1 \
+ENV NGINX_DEPS gnupg \
         gcc \
         g++ \
         make  \
@@ -39,6 +39,7 @@ ENV NGINX_DEPS gnupg1 \
         pcre-dev \
         geoip-dev \
         gd-dev \
+        brotli-dev \
         ruby-etc \
         ruby-dev \
         libxpm-dev \
@@ -46,7 +47,7 @@ ENV NGINX_DEPS gnupg1 \
         libuuid \
         util-linux-dev \
         zlib-dev \
-        gnupg1 \
+        gpg \
         gettext
 
 COPY files/ct-submit.sh /usr/bin/ct-submit.sh
@@ -54,6 +55,7 @@ COPY --from=build-go /go/bin/ct-submit /usr/bin/ct-submit
 
 # add user
 RUN : \
+    && apk update \
     && apk add --no-cache --virtual .user shadow \
     && groupadd -g 1001 www \
     && useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
@@ -82,7 +84,6 @@ RUN : \
     && lua_resty_lrucache_version=0.11 \
     && luajit_fork_version=2.1-20220310 \
     && stream_lua_nginx_version=0.0.10 \
-    && brotli_version=1.0.9 \
     && apk upgrade apk-tools \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
@@ -136,8 +137,6 @@ RUN : \
         https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz \
     && curl -fSLo ngx_brotli-${ngx_brotli_version}.tar.gz \
         https://github.com/google/ngx_brotli/archive/v${ngx_brotli_version}.tar.gz \
-    && curl -fSLo brotli-${brotli_version}.tar.gz \
-        https://github.com/google/brotli/archive/v${brotli_version}.tar.gz \
     && curl -fSLo ngx_devel_kit-${ngx_devel_kit_version}.tar.gz \
         https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz \
     && curl -fSLo nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
@@ -164,9 +163,6 @@ RUN : \
     && mv ${lua_nginx_module_name}-${lua_nginx_module_version} ${lua_nginx_module_name} \
     && tar xf ${naxsi_tarball_name}-${naxsi_version}.tar.gz \
     && mv ${naxsi_tarball_name}-${naxsi_version} ${naxsi_tarball_name} \
-    && tar xf brotli-${brotli_version}.tar.gz \
-    && (test -d ngx_brotli/deps/brotli && rmdir ngx_brotli/deps/brotli) \
-    && mv brotli-${brotli_version} ngx_brotli/deps/brotli \
     && tar xf nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
     && mv nginx-http-shibboleth-${nginx_shibboleth_version} nginx-http-shibboleth \
     && tar xf headers-more-nginx-module-${headers_more_module_version}.tar.gz \
@@ -283,7 +279,6 @@ RUN : \
         /var/www/html \
         /var/cache/nginx \
         /var/log/nginx \
-        /etc/hosts \
     && install -m644 /etc/nginx/html/50x.html /var/www/html \
     && install -m644 /etc/nginx/html/index.html /var/www/html \
     && mkdir -p -m755 /etc/nginx/scts /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
