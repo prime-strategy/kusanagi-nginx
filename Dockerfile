@@ -6,7 +6,7 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.16.0
+FROM --platform=$BUILDPLATFORM alpine:3.16.1
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -75,16 +75,15 @@ RUN : \
     && naxsi_version=1.3 \
     && nps_version=1.13.35.2 \
     && nginx_shibboleth_version=2.0.1 \
-    && headers_more_module_version=0.33 \
+    && headers_more_module_version=0.34 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.20 \
+    && lua_nginx_module_version=0.10.21 \
     && vts_version=0.1.18 \
     && ngx_devel_kit_version=0.3.1 \
-    && lua_resty_core_version=0.1.22 \
-    && lua_resty_lrucache_version=0.11 \
-    && luajit_fork_version=2.1-20220310 \
-    && stream_lua_nginx_version=0.0.10 \
-    && apk upgrade apk-tools \
+    && lua_resty_core_version=0.1.23 \
+    && lua_resty_lrucache_version=0.13 \
+    && luajit_fork_version=2.1-20220411 \
+    && stream_lua_nginx_version=0.0.11 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
