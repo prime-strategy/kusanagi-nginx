@@ -6,7 +6,7 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.16.0
+FROM --platform=$BUILDPLATFORM alpine:3.16.1
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -81,7 +81,6 @@ RUN : \
     && lua_resty_lrucache_version=0.11 \
     && luajit_fork_version=2.1-20220411 \
     && stream_lua_nginx_version=0.0.11 \
-    && apk upgrade apk-tools \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
