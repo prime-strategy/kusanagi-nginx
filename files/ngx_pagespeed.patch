@@ -1,0 +1,81 @@
+diff --git a/extensions/ngx_nps/src/ngx_pagespeed.cc b/src/ngx_pagespeed.cc
+index 579832f0c..7cf24f894 100644
+--- a/extensions/ngx_nps/src/ngx_pagespeed.cc
++++ b/extensions/ngx_nps/src/ngx_pagespeed.cc
+@@ -393,6 +396,35 @@ namespace {
+ //
+ // Based on ngx_http_add_cache_control.
+ ngx_int_t ps_set_cache_control(ngx_http_request_t* r, char* cache_control) {
++#if defined(nginx_version) && nginx_version >= 1023000
++  ngx_table_elt_t* cc = r->headers_out.cache_control;
++
++  if (cc == NULL) {
++
++      cc = reinterpret_cast<ngx_table_elt_t*>(ngx_list_push(&r->headers_out.headers));
++      if (cc == NULL) {
++          return NGX_ERROR;
++      }
++
++      r->headers_out.cache_control = cc;
++      cc->next = NULL;
++
++      cc->hash = 1;
++      ngx_str_set(&cc->key, "Cache-Control");
++
++  } else {
++      for (cc = cc->next; cc; cc = cc->next) {
++          cc->hash = 0;
++      }
++
++      cc = r->headers_out.cache_control;
++      cc->next = NULL;
++  }
++  cc->value.len = strlen(cache_control);
++  cc->value.data =
++      reinterpret_cast<u_char*>(cache_control);
++
++#else
+   // First strip existing cache-control headers.
+   ngx_table_elt_t* header;
+   NgxListIterator it(&(r->headers_out.headers.part));
+@@ -426,7 +457,7 @@ ngx_int_t ps_set_cache_control(ngx_http_request_t* r, char* cache_control) {
+   cache_control_headers[0]->value.len = strlen(cache_control);
+   cache_control_headers[0]->value.data =
+       reinterpret_cast<u_char*>(cache_control);
+-
++#endif
+   return NGX_OK;
+ }
+ 
+@@ -436,6 +467,23 @@ bool ps_get_cache_control(ngx_http_request_t* r, GoogleString* cache_control) {
+   // Use headers_out.cache_control instead of looking for Cache-Control in
+   // headers_out.headers, because if an upstream sent multiple Cache-Control
+   // headers they're already combined in headers_out.cache_control.
++#if defined(nginx_version) && nginx_version >= 1023000
++  ngx_table_elt_t* cc = r->headers_out.cache_control;
++  bool first_segment = true;
++
++  while (cc != NULL) {
++    if (cc->hash) {
++      if (first_segment) {
++        first_segment = false;
++      } else {
++        cache_control->append(", ");
++      }
++      cache_control->append(reinterpret_cast<char*>(cc->value.data),
++                            cc->value.len);
++    }
++    cc = cc->next;
++  }
++#else
+   auto ccp = static_cast<ngx_table_elt_t**>(r->headers_out.cache_control.elts);
+   if (ccp == nullptr) {
+     return false;  // Header not present.
+@@ -453,6 +501,7 @@ bool ps_get_cache_control(ngx_http_request_t* r, GoogleString* cache_control) {
+     cache_control->append(reinterpret_cast<char*>(ccp[i]->value.data),
+                           ccp[i]->value.len);
+   }
++#endif
+   return true;
+ }
+ 

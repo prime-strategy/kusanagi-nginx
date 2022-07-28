@@ -6,16 +6,14 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM alpine:3.15.4
+FROM alpine:3.16.1
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-#COPY files/add_dev.sh /usr/local/bin
-#COPY files/del_dev.sh /usr/local/bin
-
-ENV NGINX_VERSION=1.22.0
-ENV NGINX_DEPS gnupg1 ca-certificates \
+ENV NGINX_VERSION=1.23.1
+ENV NGINX_DEPS gnupg \
+        ca-certificates \
         gcc \
         g++ \
         make  \
@@ -52,6 +50,11 @@ ENV NGINX_DEPS gnupg1 ca-certificates \
 COPY files/ct-submit.sh /usr/bin/ct-submit.sh
 COPY --from=build-go /go/bin/ct-submit /usr/bin/ct-submit
 
+COPY files/naxsi.patch /tmp/naxsi.patch
+COPY files/lua-nginx-module.patch /tmp/lua-nginx-module.patch
+COPY files/ngx_pagespeed.patch /tmp/ngx_pagespeed.patch
+
+
 # add user
 RUN : \
     # prep
@@ -70,17 +73,15 @@ RUN : \
     && naxsi_tarball_name=naxsi \
     && naxsi_version=1.3 \
     && nps_version=1.13.35.2 \
-    && nginx_shibboleth_version=2.0.1 \
-    && headers_more_module_version=0.33 \
+    && headers_more_module_version=0.34 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.21 \
-    && vts_version=0.1.18 \
     && ngx_devel_kit_version=0.3.1 \
     && lua_resty_core_version=0.1.23 \
-    && lua_resty_lrucache_version=0.11 \
+    && lua_resty_lrucache_version=0.13 \
     && luajit_fork_version=2.1-20220411 \
     && stream_lua_nginx_version=0.0.11 \
-    && apk upgrade apk-tools \
+    && njs_version=0.7.6 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
@@ -104,27 +105,7 @@ RUN : \
         && sed -i -e 's,/usr/local,/usr,' -e 's,LUA_LMULTILIB\t"lib",LUA_LMULTILIB "lib64",' src/luaconf.h \
         && make install DESTDIR=/tmp/build \
         && rm /tmp/build/usr/lib/*.so ) \
-\
-# nginx 
-#   && GPG_KEYS=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
-#	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
-\
     && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
-\
-#    && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc -o nginx.tar.gz.asc \
-#    && export GNUPGHOME="$(mktemp -d)" \
-#    && found=''; \
-#    for server in \
-#		hkp://keyserver.ubuntu.com:80 \
-#		pgp.mit.edu \
-#    ; do \
-#        echo "Fetching GPG key $GPG_KEYS from $server"; \
-#        gpg --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$GPG_KEYS" && found=yes && break; \
-#    done; \
-#    test -z "$found" && echo >&2 "error: failed to fetch GPG key $GPG_KEYS" && exit 1; \
-#    gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
-#    && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
-\
     && tar xf nginx.tar.gz \
     && mkdir nginx-${NGINX_VERSION}/extensions \
     && cd ./nginx-${NGINX_VERSION}/extensions \
@@ -136,18 +117,22 @@ RUN : \
         https://github.com/google/ngx_brotli/archive/v${ngx_brotli_version}.tar.gz \
     && curl -fSLo ngx_devel_kit-${ngx_devel_kit_version}.tar.gz \
         https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz \
-    && curl -fSLo nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
-        https://github.com/nginx-shib/nginx-http-shibboleth/archive/v${nginx_shibboleth_version}.tar.gz \
     && curl -fSLo headers-more-nginx-module-${headers_more_module_version}.tar.gz \
         https://github.com/openresty/headers-more-nginx-module/archive/v${headers_more_module_version}.tar.gz \
-    && curl -fSLo nginx-module-vts-${vts_version}.tar.gz \
-        https://github.com/vozlt/nginx-module-vts/archive/v${vts_version}.tar.gz \
     && curl -fSLo ${lua_nginx_module_name}-${lua_nginx_module_version}.tar.gz \
         https://github.com/openresty/${lua_nginx_module_name}/archive/v${lua_nginx_module_version}.tar.gz \
     && curl -fSLo ${naxsi_tarball_name}-${naxsi_version}.tar.gz \
         https://github.com/nbs-system/naxsi/archive/${naxsi_version}.tar.gz \
     && curl -fSLo stream_lua_nginx-${stream_lua_nginx_version}.tar.gz \
         https://github.com/openresty/stream-lua-nginx-module/archive/v${stream_lua_nginx_version}.tar.gz \
+\
+#    && curl -fSLo nps-${nps_version}-stable.tar.gz \
+#        https://github.com/apache/incubator-pagespeed-ngx/archive/v${nps_version}-stable.tar.gz \
+#    && curl -fSLo psol.tar.gz \
+#        https://dl.google.com/dl/page-speed/psol/${nps_version}-x64.tar.gz \
+\
+    && curl -fSLo njs-${njs_version}.tar.gz \
+        https://github.com/nginx/njs/archive/refs/tags/${njs_version}.tar.gz \
     && tar xf nginx-ct-${nginx_ct_version}.tar.gz \
     && mv nginx-ct-${nginx_ct_version} nginx-ct \
     && tar xf ngx_cache_purge-${ngx_cache_purge_version}.tar.gz \
@@ -160,17 +145,25 @@ RUN : \
     && mv ${lua_nginx_module_name}-${lua_nginx_module_version} ${lua_nginx_module_name} \
     && tar xf ${naxsi_tarball_name}-${naxsi_version}.tar.gz \
     && mv ${naxsi_tarball_name}-${naxsi_version} ${naxsi_tarball_name} \
-    && tar xf nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
-    && mv nginx-http-shibboleth-${nginx_shibboleth_version} nginx-http-shibboleth \
     && tar xf headers-more-nginx-module-${headers_more_module_version}.tar.gz \
     && mv headers-more-nginx-module-${headers_more_module_version} headers-more-nginx-module \
-    && tar xf nginx-module-vts-${vts_version}.tar.gz \
-    && mv nginx-module-vts-${vts_version} nginx-module-vts \
     && tar xf stream_lua_nginx-${stream_lua_nginx_version}.tar.gz \
     && mv stream-lua-nginx-module-${stream_lua_nginx_version} stream-lua-nginx-module \
-    && cd .. \
 \
+#    && tar xf nps-${nps_version}-stable.tar.gz \
+#    && nps_dir=$(find . -name "*pagespeed-ngx-*" -type d) \
+#    && mv $nps_dir ngx_nps \
+#    && tar xf psol.tar.gz -C ngx_nps\
+\
+    && tar xf njs-${njs_version}.tar.gz \
+    && mv njs-${njs_version} njs \
+    && cd .. \
+    && patch -p1 < /tmp/naxsi.patch \
+    && patch -p1 < /tmp/lua-nginx-module.patch \
+\
+#    && patch -p1 < /tmp/ngx_pagespeed.patch \
 # configure
+\
     && export LUAJIT_INC=/tmp/build/usr/include/luajit-2.1 \
     && export LUAJIT_LIB=/tmp/build/usr/lib \
     && CC=/usr/bin/cc \
@@ -191,6 +184,11 @@ RUN : \
         --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
         --user=httpd \
         --group=www \
+        --modules-path=/usr/lib64/nginx/modules \
+        --with-poll_module \
+        --with-threads \
+        --with-http_degradation_module \
+        --with-http_slice_module \
         --with-http_ssl_module \
         --with-http_realip_module \
         --with-http_addition_module \
@@ -207,7 +205,6 @@ RUN : \
         --with-http_xslt_module \
         --with-http_image_filter_module \
         --with-http_geoip_module \
-        --with-threads \
         --with-stream \
         --with-stream_ssl_module \
         --with-stream_ssl_preread_module \
@@ -223,18 +220,15 @@ RUN : \
         --with-http_geoip_module \
         --with-http_perl_module \
         --with-pcre-jit \
-        --with-stream \
-        --with-stream_ssl_module \
         --add-module=./extensions/ngx_devel_kit \
         --add-module=./extensions/${lua_nginx_module_name} \
         --add-module=./extensions/ngx_cache_purge \
         --add-module=./extensions/nginx-ct \
         --add-module=./extensions/ngx_brotli \
         --add-module=./extensions/${naxsi_tarball_name}/naxsi_src \
-        --add-module=./extensions/nginx-http-shibboleth \
         --add-module=./extensions/headers-more-nginx-module \
-        --add-module=./extensions/nginx-module-vts \
         --add-module=./extensions/stream-lua-nginx-module \
+        --add-dynamic-module=./extensions/njs/nginx \
     " \
     && CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
         -fexceptions -fstack-protector \
@@ -276,11 +270,10 @@ RUN : \
         /var/www/html \
         /var/cache/nginx \
         /var/log/nginx \
-        /etc/hosts \
     && install -m644 /etc/nginx/html/50x.html /var/www/html \
     && install -m644 /etc/nginx/html/index.html /var/www/html \
     && mkdir -p -m755 /etc/nginx/scts /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
-    && rm -rf /tmp/build \
+    && rm -rf /tmp/build /tmp/*.patch \
     && chown 700 /usr/bin/ct-submit /usr/bin/ct-submit.sh \
     && ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
     && : # END of RUN

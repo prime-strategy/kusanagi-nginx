@@ -1,0 +1,76 @@
+--- a/extensions/naxsi/naxsi_src/naxsi_runtime.c	2022-07-27 16:28:34.996881590 +0900
++++ b/extensions/naxsi/naxsi_src/naxsi_runtime.c	2022-07-27 16:34:59.778409424 +0900
+@@ -2840,19 +2840,11 @@ ngx_http_naxsi_data_parse(ngx_http_reque
+   tag.data = ngx_pcalloc(r->pool, tag.len + 1);
+   if (tag.data)
+     memcpy(tag.data, "x-forwarded-for", 15);
+-  unsigned int      n = 0;
+-  ngx_table_elt_t** h = NULL;
+-  ngx_array_t       a;
+-  if (r->headers_in.x_forwarded_for.nelts >= 1) {
+-    a = r->headers_in.x_forwarded_for;
+-    n = a.nelts;
+-  }
+-  if (n >= 1)
+-    h = a.elts;
+-  if (n >= 1) {
+-    ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "xfor %s", h[0]->value.data);
++  if (r->headers_in.x_forwarded_for != NULL) {
++    ngx_str_t value = r->headers_in.x_forwarded_for->value;
++    ngx_log_debug(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "xfor %s", value);
+ 
+-    ngx_http_naxsi_update_current_ctx_status(ctx, cf, r, &tag, (ngx_str_t*)h[0]->value.data);
++    ngx_http_naxsi_update_current_ctx_status(ctx, cf, r, &tag, (ngx_str_t*)&value);
+   }
+ }
+ 
+@@ -2868,35 +2860,29 @@ ngx_http_naxsi_update_current_ctx_status
+   ngx_http_check_rule_t* cr;
+ 
+   ngx_http_special_score_t* sc;
+-  unsigned int              n = 0;
+ 
+   NX_DEBUG(_debug_custom_score, NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "XX-custom check rules");
+ 
+   int               ignore = 0;
+-  ngx_table_elt_t** h;
+-  ngx_array_t       a;
++  ngx_str_t         x_forwarded;
+ 
+   ctx->ignore = 0;
+ 
+   /*cr, sc, cf, ctx*/
+   if (cf->check_rules && ctx->special_scores) {
+-    if (r->headers_in.x_forwarded_for.nelts >= 1) {
+-      a = r->headers_in.x_forwarded_for;
+-      n = a.nelts;
+-      if (n >= 1) {
+-        h = a.elts;
+-        NX_DEBUG(_debug_whitelist_ignore,
+-                 NGX_LOG_DEBUG_HTTP,
+-                 r->connection->log,
+-                 0,
+-                 "XX- lookup ignore X-Forwarded-For: %s",
+-                 h[0]->value.data);
+-        ngx_str_t ip;
+-        ip.len  = strlen((char*)h[0]->value.data);
+-        ip.data = ngx_pcalloc(r->pool, ip.len + 1);
+-        memcpy(ip.data, h[0]->value.data, ip.len);
+-        ignore = nx_can_ignore_ip(&ip, cf) || nx_can_ignore_cidr(&ip, cf);
+-      }
++    if (r->headers_in.x_forwarded_for != NULL) {
++      x_forwarded = r->headers_in.x_forwarded_for->value;
++      NX_DEBUG(_debug_whitelist_ignore,
++               NGX_LOG_DEBUG_HTTP,
++               r->connection->log,
++               0,
++               "XX- lookup ignore X-Forwarded-For: %s",
++               x_forwarded.data);
++      ngx_str_t ip;
++      ip.len  = x_forwarded.len;
++      ip.data = ngx_pcalloc(r->pool, ip.len + 1);
++      memcpy(ip.data, x_forwarded.data, ip.len);
++      ignore = nx_can_ignore_ip(&ip, cf) || nx_can_ignore_cidr(&ip, cf);
+     } else {
+       ngx_str_t* ip = &r->connection->addr_text;
+       NX_DEBUG(_debug_whitelist_ignore,
