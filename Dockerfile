@@ -6,7 +6,7 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.16.1
+FROM --platform=$BUILDPLATFORM alpine:3.16.2
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -125,12 +125,10 @@ RUN : \
         https://github.com/nbs-system/naxsi/archive/${naxsi_version}.tar.gz \
     && curl -fSLo stream_lua_nginx-${stream_lua_nginx_version}.tar.gz \
         https://github.com/openresty/stream-lua-nginx-module/archive/v${stream_lua_nginx_version}.tar.gz \
-\
-#    && curl -fSLo nps-${nps_version}-stable.tar.gz \
-#        https://github.com/apache/incubator-pagespeed-ngx/archive/v${nps_version}-stable.tar.gz \
-#    && curl -fSLo psol.tar.gz \
-#        https://dl.google.com/dl/page-speed/psol/${nps_version}-x64.tar.gz \
-\
+    && curl -fSLo nps-${nps_version}-stable.tar.gz \
+        https://github.com/apache/incubator-pagespeed-ngx/archive/v${nps_version}-stable.tar.gz \
+    && curl -fSLo psol.tar.gz \
+        https://dl.google.com/dl/page-speed/psol/${nps_version}-x64.tar.gz \
     && curl -fSLo njs-${njs_version}.tar.gz \
         https://github.com/nginx/njs/archive/refs/tags/${njs_version}.tar.gz \
     && tar xf nginx-ct-${nginx_ct_version}.tar.gz \
@@ -149,21 +147,16 @@ RUN : \
     && mv headers-more-nginx-module-${headers_more_module_version} headers-more-nginx-module \
     && tar xf stream_lua_nginx-${stream_lua_nginx_version}.tar.gz \
     && mv stream-lua-nginx-module-${stream_lua_nginx_version} stream-lua-nginx-module \
-\
-#    && tar xf nps-${nps_version}-stable.tar.gz \
-#    && nps_dir=$(find . -name "*pagespeed-ngx-*" -type d) \
-#    && mv $nps_dir ngx_nps \
-#    && tar xf psol.tar.gz -C ngx_nps\
-\
+    && tar xf nps-${nps_version}-stable.tar.gz \
+    && nps_dir=$(find . -name "*pagespeed-ngx-*" -type d) \
+    && mv $nps_dir ngx_nps \
+    && tar xf psol.tar.gz -C ngx_nps\
     && tar xf njs-${njs_version}.tar.gz \
     && mv njs-${njs_version} njs \
     && cd .. \
     && patch -p1 < /tmp/naxsi.patch \
     && patch -p1 < /tmp/lua-nginx-module.patch \
-\
-#    && patch -p1 < /tmp/ngx_pagespeed.patch \
-# configure
-\
+    && patch -p1 < /tmp/ngx_pagespeed.patch \
     && export LUAJIT_INC=/tmp/build/usr/include/luajit-2.1 \
     && export LUAJIT_LIB=/tmp/build/usr/lib \
     && CC=/usr/bin/cc \
