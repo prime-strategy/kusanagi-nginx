@@ -6,7 +6,7 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.16.1
+FROM --platform=$BUILDPLATFORM alpine:3.16.2
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -71,11 +71,9 @@ RUN : \
     && naxsi_tarball_name=naxsi \
     && naxsi_version=1.3 \
     && nps_version=1.13.35.2 \
-    && nginx_shibboleth_version=2.0.1 \
     && headers_more_module_version=0.33 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.21 \
-    && vts_version=0.1.18 \
     && ngx_devel_kit_version=0.3.1 \
     && lua_resty_core_version=0.1.23 \
     && lua_resty_lrucache_version=0.11 \
@@ -104,27 +102,7 @@ RUN : \
         && sed -i -e 's,/usr/local,/usr,' -e 's,LUA_LMULTILIB\t"lib",LUA_LMULTILIB "lib64",' src/luaconf.h \
         && make install DESTDIR=/tmp/build \
         && rm /tmp/build/usr/lib/*.so ) \
-\
-# nginx 
-#   && GPG_KEYS=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
-#	&& GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
-\
     && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
-\
-#    && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc -o nginx.tar.gz.asc \
-#    && export GNUPGHOME="$(mktemp -d)" \
-#    && found=''; \
-#    for server in \
-#		hkp://keyserver.ubuntu.com:80 \
-#		pgp.mit.edu \
-#    ; do \
-#        echo "Fetching GPG key $GPG_KEYS from $server"; \
-#        gpg --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$GPG_KEYS" && found=yes && break; \
-#    done; \
-#    test -z "$found" && echo >&2 "error: failed to fetch GPG key $GPG_KEYS" && exit 1; \
-#    gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
-#    && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
-\
     && tar xf nginx.tar.gz \
     && mkdir nginx-${NGINX_VERSION}/extensions \
     && cd ./nginx-${NGINX_VERSION}/extensions \
@@ -136,12 +114,8 @@ RUN : \
         https://github.com/google/ngx_brotli/archive/v${ngx_brotli_version}.tar.gz \
     && curl -fSLo ngx_devel_kit-${ngx_devel_kit_version}.tar.gz \
         https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz \
-    && curl -fSLo nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
-        https://github.com/nginx-shib/nginx-http-shibboleth/archive/v${nginx_shibboleth_version}.tar.gz \
     && curl -fSLo headers-more-nginx-module-${headers_more_module_version}.tar.gz \
         https://github.com/openresty/headers-more-nginx-module/archive/v${headers_more_module_version}.tar.gz \
-    && curl -fSLo nginx-module-vts-${vts_version}.tar.gz \
-        https://github.com/vozlt/nginx-module-vts/archive/v${vts_version}.tar.gz \
     && curl -fSLo ${lua_nginx_module_name}-${lua_nginx_module_version}.tar.gz \
         https://github.com/openresty/${lua_nginx_module_name}/archive/v${lua_nginx_module_version}.tar.gz \
     && curl -fSLo ${naxsi_tarball_name}-${naxsi_version}.tar.gz \
@@ -160,12 +134,8 @@ RUN : \
     && mv ${lua_nginx_module_name}-${lua_nginx_module_version} ${lua_nginx_module_name} \
     && tar xf ${naxsi_tarball_name}-${naxsi_version}.tar.gz \
     && mv ${naxsi_tarball_name}-${naxsi_version} ${naxsi_tarball_name} \
-    && tar xf nginx-http-shibboleth-${nginx_shibboleth_version}.tar.gz \
-    && mv nginx-http-shibboleth-${nginx_shibboleth_version} nginx-http-shibboleth \
     && tar xf headers-more-nginx-module-${headers_more_module_version}.tar.gz \
     && mv headers-more-nginx-module-${headers_more_module_version} headers-more-nginx-module \
-    && tar xf nginx-module-vts-${vts_version}.tar.gz \
-    && mv nginx-module-vts-${vts_version} nginx-module-vts \
     && tar xf stream_lua_nginx-${stream_lua_nginx_version}.tar.gz \
     && mv stream-lua-nginx-module-${stream_lua_nginx_version} stream-lua-nginx-module \
     && cd .. \
@@ -231,9 +201,7 @@ RUN : \
         --add-module=./extensions/nginx-ct \
         --add-module=./extensions/ngx_brotli \
         --add-module=./extensions/${naxsi_tarball_name}/naxsi_src \
-        --add-module=./extensions/nginx-http-shibboleth \
         --add-module=./extensions/headers-more-nginx-module \
-        --add-module=./extensions/nginx-module-vts \
         --add-module=./extensions/stream-lua-nginx-module \
     " \
     && CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
