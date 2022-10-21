@@ -11,7 +11,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.23.1
+ENV NGINX_VERSION=1.23.2
 ENV NGINX_DEPS gnupg \
         ca-certificates \
         gcc \
@@ -58,7 +58,6 @@ COPY files/ngx_pagespeed.patch /tmp/ngx_pagespeed.patch
 # add user
 RUN : \
     # prep
-    && apk update \
     && apk add --no-cache --virtual .user shadow \
     && groupadd -g 1001 www \
     && useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
@@ -75,13 +74,13 @@ RUN : \
     && nps_version=1.13.35.2 \
     && headers_more_module_version=0.34 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.21 \
+    && lua_nginx_module_version=0.10.22 \
     && ngx_devel_kit_version=0.3.1 \
-    && lua_resty_core_version=0.1.23 \
+    && lua_resty_core_version=0.1.24 \
     && lua_resty_lrucache_version=0.13 \
-    && luajit_fork_version=2.1-20220411 \
+    && luajit_fork_version=2.1-20220915 \
     && stream_lua_nginx_version=0.0.11 \
-    && njs_version=0.7.6 \
+    && njs_version=0.7.7 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
