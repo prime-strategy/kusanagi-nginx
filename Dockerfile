@@ -53,7 +53,7 @@ COPY --from=build-go /go/bin/ct-submit /usr/bin/ct-submit
 COPY files/naxsi.patch /tmp/naxsi.patch
 COPY files/lua-nginx-module.patch /tmp/lua-nginx-module.patch
 COPY files/ngx_pagespeed.patch /tmp/ngx_pagespeed.patch
-
+COPY files/docker-entrypoint.sh /
 
 # add user
 RUN : \
@@ -266,8 +266,9 @@ RUN : \
     && install -m644 /etc/nginx/html/index.html /var/www/html \
     && mkdir -p -m755 /etc/nginx/scts /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
     && rm -rf /tmp/build /tmp/*.patch \
-    && chown 700 /usr/bin/ct-submit /usr/bin/ct-submit.sh \
+    && chmod 700 /usr/bin/ct-submit /usr/bin/ct-submit.sh \
     && ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
+    && chmod 755 /docker-entrypoint.sh \
     && : # END of RUN
 
 
@@ -291,6 +292,5 @@ EXPOSE 8443
 VOLUME /home/kusanagi
 
 USER httpd
-COPY files/docker-entrypoint.sh /
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]

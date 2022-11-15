@@ -68,29 +68,18 @@ env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 if [ -f /etc/nginx/default.key -o -f /etc/nginx/default.crt ]; then
     /bin/true
 else
-    if [ -f /proc/cpuinfo ] ; then
-        RAND=/proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime
-    else
-        dd if=/dev/urandam of=/tmp/rand count=2048
-        RAND=/tmp/rand
-    fi
-    openssl genrsa -rand $RAND 2048 > /etc/nginx/default.key 2> /dev/null
-    if [ -f /tmp/rand ]; then
-        rm /tmp/rand
-    fi
-
-    cat <<-EOF | openssl req -new -key /etc/nginx/default.key \
-        -x509 -sha256 -days 365 -set_serial 1 -extensions v3_req \
-        -out /etc/nginx/default.crt 2>/dev/null
---
-SomeState
-SomeCity
-SomeOrganization
-SomeOrganizationalUnit
-${FQDN}
-root@${FQDN}
-EOF
-
+    keyfile=$(mktemp /tmp/k_ssl_key.XXXXXX)
+    certfile=$(mktemp /tmp/k_ssl_cert.XXXXXX)
+    trap "rm -f ${keyfile} ${certfile}" SIGINT
+    (echo --; echo SomeState; echo SomeCity; echo SomeOrganization; \
+     echo SomeOrganizationalUnit; echo localhost.localdomain; \
+     echo root@localhost.localdomain) | \
+    openssl req -newkey rsa:2048 -keyout "${keyfile}" -nodes -x509 \
+                -days 365 -out "${certfile}" 2> /dev/null
+    mv "${keyfile}" /etc/nginx/default.key
+    chmod 0600 /etc/nginx/default.key
+    mv "${certfile}" /etc/nginx/default.crt
+    chmod 0644 /etc/nginx/default.crt
 fi
 
 #echo 127.0.0.1 $FQDN >> /etc/hosts
