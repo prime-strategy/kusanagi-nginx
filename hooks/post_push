@@ -9,7 +9,7 @@ if [ "$DOCKERFILE_PATH" = "" ]; then
 else
     DOCKERFILE_PATH_ARG="-f $DOCKERFILE_PATH"
 fi
-export ARCHITECTURES=linux/amd64,linux/i386,linux/arm64,linux/arm/v6,linux/arm/v7,linux/ppc64le,linux/s390x
+export ARCHITECTURES=linux/amd64,linux/i386,linux/arm64/v8,linux/arm/v6,linux/arm/v7,linux/ppc64le,linux/s390x
 
 docker buildx create \
     --name $BUILDER \
