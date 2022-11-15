@@ -18,7 +18,7 @@ function env2cert {
 #//---------------------------------------------------------------------------
 # Improv Sec
 if [ ! -e /etc/nginx/ssl_sess_ticket.key ] ; then
-	openssl rand 48 > /etc/nginx/ssl_sess_ticket.key
+    openssl rand 48 > /etc/nginx/ssl_sess_ticket.key
 fi
 if [ ! -e /etc/nginx/dhparam.key ] ; then
     env2cert /etc/nginx/dhparam.key "$SSL_DHPARAM" > /dev/null
@@ -57,7 +57,7 @@ env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 #    env ENV_SECRET_KEY_BASE=${ENV_SECRET_KEY_BASE?ENV_SECRET_KEY_BASE} \
 #        RAILS_ENV=${RAILS_ENV:-development} \
 #        NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
-#	NO_USE_SSLST=${NO_USE_SSLST:+#} \
+#        NO_USE_SSLST=${NO_USE_SSLST:+#} \
 #        /usr/bin/envsubst '$$ENV_SECRET_KEY_BASE $$ENV_SECRET_KEY_BASE
 #        $$RAILS_ENV $$NO_USE_NAXSI $$NO_USE_SSLST' < rails.inc.template > rails.inc \
 #   || exit 1
@@ -66,13 +66,22 @@ env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 #// create self-signed cert
 #//---------------------------------------------------------------------------
 if [ -f /etc/nginx/default.key -o -f /etc/nginx/default.crt ]; then
-	/bin/true
+    /bin/true
 else
-	openssl genrsa -rand /proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime 2048 > /etc/nginx/default.key 2> /dev/null
+    if [ -f /proc/cpuinfo ] ; then
+        RAND=/proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/uptime
+    else
+        dd if=/dev/urandam of=/tmp/rand count=2048
+        RAND=/tmp/rand
+    fi
+    openssl genrsa -rand $RAND 2048 > /etc/nginx/default.key 2> /dev/null
+    if [ -f /tmp/rand ]; then
+        rm /tmp/rand
+    fi
 
-	cat <<-EOF | openssl req -new -key /etc/nginx/default.key \
-		-x509 -sha256 -days 365 -set_serial 1 -extensions v3_req \
-		-out /etc/nginx/default.crt 2>/dev/null
+    cat <<-EOF | openssl req -new -key /etc/nginx/default.key \
+        -x509 -sha256 -days 365 -set_serial 1 -extensions v3_req \
+        -out /etc/nginx/default.crt 2>/dev/null
 --
 SomeState
 SomeCity
@@ -80,7 +89,8 @@ SomeOrganization
 SomeOrganizationalUnit
 ${FQDN}
 root@${FQDN}
-	EOF
+EOF
+
 fi
 
 #echo 127.0.0.1 $FQDN >> /etc/hosts
