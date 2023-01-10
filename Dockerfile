@@ -26,7 +26,8 @@ ENV NGINX_DEPS gnupg \
         musl-dev \
         perl-dev \
         libxslt-dev \
-        openssl-dev \
+        openssl=3.0.7-r2 \
+        openssl-dev=3.0.7-r2 \
         linux-headers \
         libpng-dev \
         freetype-dev \
@@ -75,7 +76,7 @@ RUN : \
     && headers_more_module_version=0.34 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.22 \
-    && ngx_devel_kit_version=0.3.1 \
+    && ngx_devel_kit_version=0.3.2 \
     && lua_resty_core_version=0.1.24 \
     && lua_resty_lrucache_version=0.13 \
     && luajit_fork_version=2.1-20220915 \
