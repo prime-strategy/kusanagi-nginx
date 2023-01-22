@@ -41,7 +41,6 @@ ENV NGINX_DEPS gnupg \
         brotli-dev \
         ruby-etc \
         ruby-dev \
-        libxpm-dev \
         fontconfig-dev \
         libuuid \
         util-linux-dev \
