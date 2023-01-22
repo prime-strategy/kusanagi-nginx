@@ -1,6 +1,5 @@
 #!/bin/bash
-
-set -eux
+set -x
 
 export DOCKER_CLI_EXPERIMENTAL=enabled
 export DOCKER_BUILDKIT=1
@@ -10,5 +9,25 @@ if [ "$DOCKERFILE_PATH" = "" ]; then
 else
     DOCKERFILE_PATH_ARG="-f $DOCKERFILE_PATH"
 fi
+export ARCHITECTURES=linux/amd64,linux/i386,linux/arm64/v8,linux/arm/v6,linux/arm/v7,linux/ppc64le,linux/s390x
 
-docker build $DOCKERFILE_PATH_ARG -t $IMAGE_NAME .
+docker buildx create \
+    --name $BUILDER \
+    --driver docker-container \
+    --platform $ARCHITECTURES \
+    --use
+docker buildx inspect --bootstrap
+docker buildx ls
+docker buildx build \
+    --progress plain \
+    $DOCKERFILE_PATH_ARG \
+    -t $IMAGE_NAME .
+docker buildx build \
+    --platform $ARCHITECTURES \
+    --progress plain \
+    $DOCKERFILE_PATH_ARG \
+    -t $IMAGE_NAME \
+    --push .
+docker buildx imagetools inspect $IMAGE_NAME
+
+exit 0
