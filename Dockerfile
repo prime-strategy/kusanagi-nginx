@@ -1,12 +1,12 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.19.4-bullseye as build-go
+FROM --platform=$BUILDPLATFORM golang:1.20.0-bullseye as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.17.0
+FROM --platform=$BUILDPLATFORM alpine:3.17.2
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -26,8 +26,8 @@ ENV NGINX_DEPS gnupg \
         musl-dev \
         perl-dev \
         libxslt-dev \
-        openssl=3.0.7-r2 \
-        openssl-dev=3.0.7-r2 \
+        openssl=3.0.8-r0 \
+        openssl-dev=3.0.8-r0 \
         linux-headers \
         libpng-dev \
         freetype-dev \
