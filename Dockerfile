@@ -29,8 +29,8 @@ ENV NGINX_DEPS gnupg \
         musl-dev \
         perl-dev \
         libxslt-dev \
-        openssl=3.0.8-r0 \
-        openssl-dev=3.0.8-r0 \
+        openssl=3.0.8-r1 \
+        openssl-dev=3.0.8-r1 \
         linux-headers \
         libpng-dev \
         freetype-dev \
@@ -75,12 +75,12 @@ RUN : \
     && nps_version=1.13.35.2 \
     && headers_more_module_version=0.34 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.22 \
+    && lua_nginx_module_version=0.10.24 \
     && ngx_devel_kit_version=0.3.2 \
-    && lua_resty_core_version=0.1.24 \
+    && lua_resty_core_version=0.1.26 \
     && lua_resty_lrucache_version=0.13 \
-    && luajit_fork_version=2.1-20220915 \
-    && stream_lua_nginx_version=0.0.11 \
+    && luajit_fork_version=2.1-20230119 \
+    && stream_lua_nginx_version=0.0.13 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
