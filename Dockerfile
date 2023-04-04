@@ -6,12 +6,12 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.17.2
+FROM --platform=$BUILDPLATFORM alpine:3.17.3
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.23.3
+ENV NGINX_VERSION=1.23.4
 ENV NGINX_DEPS gnupg \
         ca-certificates \
         gcc \
@@ -26,8 +26,8 @@ ENV NGINX_DEPS gnupg \
         musl-dev \
         perl-dev \
         libxslt-dev \
-        openssl=3.0.8-r1 \
-        openssl-dev=3.0.8-r1 \
+        openssl=3.0.8-r3 \
+        openssl-dev=3.0.8-r3 \
         linux-headers \
         libpng-dev \
         freetype-dev \
