@@ -11,7 +11,8 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.23.4
+ENV NGINX_VERSION=1.24.0
+ENV OPENSSL_VERSION=3.0.8-r4
 ENV NGINX_DEPS gnupg \
         ca-certificates \
         gcc \
@@ -26,8 +27,8 @@ ENV NGINX_DEPS gnupg \
         musl-dev \
         perl-dev \
         libxslt-dev \
-        openssl=3.0.8-r3 \
-        openssl-dev=3.0.8-r3 \
+        openssl=${OPENSSL_VERSION} \
+        openssl-dev=${OPENSSL_VERSION} \
         linux-headers \
         libpng-dev \
         freetype-dev \
@@ -77,9 +78,9 @@ RUN : \
     && ngx_devel_kit_version=0.3.2 \
     && lua_resty_core_version=0.1.26 \
     && lua_resty_lrucache_version=0.13 \
-    && luajit_fork_version=2.1-20230119 \
+    && luajit_fork_version=2.1-20230410 \
     && stream_lua_nginx_version=0.0.13 \
-    && njs_version=0.7.11 \
+    && njs_version=0.7.12 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
