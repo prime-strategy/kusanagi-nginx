@@ -10,7 +10,7 @@ server {
     ${NO_SSL_REDIRECT}rewrite ^(.*)$ https://${FQDN}$request_uri permanent; # SSL ONLY
 
     set $do_not_cache ${NO_USE_FCACHE}; ## page cache
-    set $expire_days ${EXPIRE_DAYS};
+    set $expire_days ${EXPIRE_DAYS}d;
     
     charset UTF-8;
     client_max_body_size 16M;
@@ -30,7 +30,7 @@ server {
     server_name ${FQDN};
 
     set $do_not_cache ${NO_USE_FCACHE}; ## page cache
-    set $expire_days ${EXPIRE_DAYS};
+    set $expire_days ${EXPIRE_DAYS}d;
     
     ssl_certificate     ${SSL_CERT};
     ssl_certificate_key ${SSL_KEY};
