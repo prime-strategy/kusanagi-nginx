@@ -12,7 +12,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.24.0
-ENV OPENSSL_VERSION=3.1.1-r3
+ENV OPENSSL_VERSION=3.1.2-r0
 ENV NGINX_DEPS gnupg \
         ca-certificates \
         gcc \
@@ -74,13 +74,13 @@ RUN : \
     && nps_version=1.13.35.2 \
     && headers_more_module_version=0.34 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.24 \
+    && lua_nginx_module_version=0.10.25 \
     && ngx_devel_kit_version=0.3.2 \
-    && lua_resty_core_version=0.1.26 \
+    && lua_resty_core_version=0.1.27 \
     && lua_resty_lrucache_version=0.13 \
     && luajit_fork_version=2.1-20230410 \
     && stream_lua_nginx_version=0.0.13 \
-    && njs_version=0.7.12 \
+    && njs_version=0.8.0 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && mkdir /tmp/build \
     && cd /tmp/build \
