@@ -28,5 +28,5 @@ fastcgi_cache_valid  200 10m;
 fastcgi_no_cache     $do_not_cache;
 fastcgi_cache_bypass $do_not_cache;
 
-add_header X-F-Cache $upstream_cache_status;
+more_set_headers "X-F-Cache: $upstream_cache_status";
 

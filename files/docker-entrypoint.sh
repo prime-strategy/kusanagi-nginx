@@ -1,6 +1,7 @@
 #!/bin/sh
 
 export PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin
+OPENSSL=openssl
 
 function env2cert {
     file=$1
@@ -10,7 +11,7 @@ function env2cert {
     echo -n $file || echo -n
 }
 
-[ "x$SSL_CERT" != "x" -a ! -f "$SSL_CERT" ] && SSL_CERT=$(env2cert /etc/nginx/default.pem "$SSL_CERT")
+[ "x$SSL_CERT" != "x" -a ! -f "$SSL_CERT" ] && SSL_CERT=$(env2cert /etc/nginx/default.crt "$SSL_CERT")
 [ "x$SSL_KEY" != "x" -a ! -f "$SSL_KEY" ] && SSL_KEY=$(env2cert /etc/nginx/default.key "$SSL_KEY")
 
 #//---------------------------------------------------------------------------
@@ -18,11 +19,11 @@ function env2cert {
 #//---------------------------------------------------------------------------
 # Improv Sec
 if [ ! -e /etc/nginx/ssl_sess_ticket.key ] ; then
-    openssl rand 48 > /etc/nginx/ssl_sess_ticket.key
+    ${OPENSSL} rand 48 > /etc/nginx/ssl_sess_ticket.key
 fi
 if [ ! -e /etc/nginx/dhparam.key ] ; then
     env2cert /etc/nginx/dhparam.key "$SSL_DHPARAM" > /dev/null
-    test -f /etc/nginx/dhparam.key || openssl dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
+    test -f /etc/nginx/dhparam.key || ${OPENSSL} dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
 fi
 
 KUSANAGI_PROVISION=${KUSANAGI_PROVISION:-lamp}
@@ -74,7 +75,7 @@ else
     (echo --; echo SomeState; echo SomeCity; echo SomeOrganization; \
      echo SomeOrganizationalUnit; echo localhost.localdomain; \
      echo root@localhost.localdomain) | \
-    openssl req -newkey rsa:2048 -keyout "${keyfile}" -nodes -x509 \
+    ${OPENSSL} req -newkey rsa:2048 -keyout "${keyfile}" -nodes -x509 \
                 -days 365 -out "${certfile}" 2> /dev/null
     mv "${keyfile}" /etc/nginx/default.key
     chmod 0600 /etc/nginx/default.key

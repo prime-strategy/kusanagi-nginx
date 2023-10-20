@@ -13,7 +13,7 @@ location ~ [^/]\.php(/|$) {
     include conf.d/fastcgi.inc;
     include conf.d/fastcgi_cache.inc;
 
-    add_header X-Signature KUSANAGI;
+    more_set_headers 'X-Signature: KUSANAGI';
     ${NO_USE_SSLST}include conf.d/ssl_st.inc;
     ${NO_USE_NAXSI}include naxsi.d/general/*.conf;
 }
