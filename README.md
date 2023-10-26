@@ -4,7 +4,7 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 
 # Versions (tags)
 
-- 1.25.0-r0
+- 1.25.3-r0
 
 # Image Content
 
@@ -14,7 +14,7 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 - lua-nginx-module 0.10.24
 - lua_resty_core_version 0.1.26
 - lua_resty_lrucache_version 0.13
-- luajit_fork_version 2.1-20230410
+- luajit_fork_version 2.1-20231006
 - stream_lua_nginx_version 0.0.13
 - naxsi 1.3
 - nginx-ct 1.3.2
