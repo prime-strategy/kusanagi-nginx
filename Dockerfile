@@ -81,13 +81,12 @@ RUN : \
     && luajit_fork_version=2.1-20231006 \
     && stream_lua_nginx_version=0.0.13 \
     && njs_version=0.8.0 \
-    && openssl_version=3.1.2 \
+    && openssl_version=3.1.4 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
 \
     && export PREFIX=/usr \
     && export LUA_LIB_DIR=/usr/share/lua/5.1 \
-    && (mkdir build || true) \
     && (cd build \
         && curl -fSL https://github.com/openresty/lua-resty-core/archive/v${lua_resty_core_version}.tar.gz | tar zxf - \
         && (cd lua-resty-core-${lua_resty_core_version} \
@@ -207,8 +206,8 @@ RUN : \
                 -Wno-unused-parameter \
                 -Wno-stringop-truncation \
                 -Wno-stringop-overflow' \
-            && patch -p1 < ../naxsi.patch \
-            && patch -p1 < ../ngx_pagespeed.patch \
+            && patch -p1 < /tmp/build/naxsi.patch \
+            && patch -p1 < /tmp/build/ngx_pagespeed.patch \
             && ./configure $CONF --with-cc-opt="$CFLAGS" \
     \
 # build
