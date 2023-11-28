@@ -76,13 +76,13 @@ RUN : \
     && naxsi_tarball_name=naxsi \
     && naxsi_version=1.3 \
     && nps_version=1.13.35.2 \
-    && headers_more_module_version=0.34 \
+    && headers_more_module_version=0.36 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.25 \
-    && ngx_devel_kit_version=0.3.2 \
+    && ngx_devel_kit_version=0.3.3 \
     && lua_resty_core_version=0.1.27 \
     && lua_resty_lrucache_version=0.13 \
-    && luajit_fork_version=2.1-20231006 \
+    && luajit_fork_version=2.1-20231117 \
     && stream_lua_nginx_version=0.0.13 \
     && njs_version=0.8.0 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
