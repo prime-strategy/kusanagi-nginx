@@ -6,13 +6,13 @@ RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.18.3
+FROM --platform=$BUILDPLATFORM alpine:3.19.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.25.3
-ENV OPENSSL_VERSION=3.1.4-r1
+ENV OPENSSL_VERSION=3.1.4-r2
 ENV NGINX_DEPS gnupg \
         ca-certificates \
         gcc \
@@ -275,6 +275,6 @@ VOLUME /home/kusanagi
 
 USER httpd
 WORKDIR /var/www/html
-HEALTHCHECK --interval=10s --timeout=3s CMD curl -f http://127.0.0.1/ > /dev/null  || exit 1
+HEALTHCHECK --interval=10s --timeout=3s CMD curl -f http://127.0.0.1:8000/ > /dev/null  || exit 1
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
