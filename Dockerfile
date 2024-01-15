@@ -12,7 +12,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.25.3
-ENV OPENSSL_VERSION=3.1.4-r2
+ENV OPENSSL_VERSION=3.1.4-r3
 ENV NGINX_DEPS gnupg \
         ca-certificates \
         gcc \
@@ -72,14 +72,14 @@ RUN : \
     && naxsi_tarball_name=naxsi \
     && naxsi_version=1.3 \
     && nps_version=1.13.35.2 \
-    && headers_more_module_version=0.36 \
+    && headers_more_module_version=0.37 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.25 \
+    && lua_nginx_module_version=0.10.26 \
     && ngx_devel_kit_version=0.3.3 \
-    && lua_resty_core_version=0.1.27 \
+    && lua_resty_core_version=0.1.28 \
     && lua_resty_lrucache_version=0.13 \
     && luajit_fork_version=2.1-20231117 \
-    && stream_lua_nginx_version=0.0.13 \
+    && stream_lua_nginx_version=0.0.14 \
     && njs_version=0.8.2 \
     && openssl_version=3.1.4 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
@@ -234,11 +234,15 @@ RUN : \
     && mv /tmp/envsubst /usr/bin/envsubst \
 \
 # setup configures
-    && mkdir -p -m755 /var/www/html \
+    && mkdir -p -m755 \
         /etc/nginx/conf.d \
+        /etc/ssl/httpd \
+        /var/www/html \
         /var/cache/nginx \
         /var/log/nginx  \
-    && chown -R httpd:www /etc/nginx \
+    && chown -R httpd:www \
+        /etc/nginx \
+        /etc/ssl/httpd \
         /var/www/html \
         /var/cache/nginx \
         /var/log/nginx \

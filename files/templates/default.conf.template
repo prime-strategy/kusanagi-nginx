@@ -35,7 +35,7 @@ server {
     ssl_certificate     ${SSL_CERT};
     ssl_certificate_key ${SSL_KEY};
     ssl_ct ${USE_SSL_CT};
-    ssl_ct_static_scts /etc/nginx/scts;
+    ssl_ct_static_scts /etc/ssl/httpd/scts;
 
     include conf.d/ssl.inc;
     ## OCSP stapling
