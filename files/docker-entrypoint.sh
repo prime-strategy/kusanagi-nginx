@@ -10,19 +10,19 @@ function env2cert {
     echo -n $file || echo -n
 }
 
-[ "x$SSL_CERT" != "x" -a ! -f "$SSL_CERT" ] && SSL_CERT=$(env2cert /etc/nginx/default.pem "$SSL_CERT")
-[ "x$SSL_KEY" != "x" -a ! -f "$SSL_KEY" ] && SSL_KEY=$(env2cert /etc/nginx/default.key "$SSL_KEY")
+[ "x$SSL_CERT" != "x" -a ! -f "$SSL_CERT" ] && SSL_CERT=$(env2cert /etc/ssl/httpd/default.pem "$SSL_CERT")
+[ "x$SSL_KEY" != "x" -a ! -f "$SSL_KEY" ] && SSL_KEY=$(env2cert /etc/ssl/httpd/default.key "$SSL_KEY")
 
 #//---------------------------------------------------------------------------
 #// Improv security
 #//---------------------------------------------------------------------------
 # Improv Sec
-if [ ! -e /etc/nginx/ssl_sess_ticket.key ] ; then
-    openssl rand 48 > /etc/nginx/ssl_sess_ticket.key
+if [ ! -e /etc/ssl/httpd/ssl_sess_ticket.key ] ; then
+    openssl rand 48 > /etc/ssl/httpd/ssl_sess_ticket.key
 fi
-if [ ! -e /etc/nginx/dhparam.key ] ; then
-    env2cert /etc/nginx/dhparam.key "$SSL_DHPARAM" > /dev/null
-    test -f /etc/nginx/dhparam.key || openssl dhparam 2048 > /etc/nginx/dhparam.key 2> /dev/null
+if [ ! -e /etc/ssl/httpd/dhparam.key ] ; then
+    env2cert /etc/ssl/httpd/dhparam.key "$SSL_DHPARAM" > /dev/null
+    test -f /etc/ssl/httpd/dhparam.key || openssl dhparam 2048 > /etc/ssl/httpd/dhparam.key 2> /dev/null
 fi
 
 KUSANAGI_PROVISION=${KUSANAGI_PROVISION:-lamp}
@@ -39,8 +39,8 @@ cd /etc/nginx/conf.d \
     USE_SSL_CT=${USE_SSL_CT:-off} \
     USE_SSL_OSCP=${USE_SSL_OSCP:-off} \
     OSCP_RESOLV=${OSCP_RESOLV} \
-    SSL_CERT=${SSL_CERT:-/etc/nginx/default.crt} \
-    SSL_KEY=${SSL_KEY:-/etc/nginx/default.key} \
+    SSL_CERT=${SSL_CERT:-/etc/ssl/httpd/default.pem} \
+    SSL_KEY=${SSL_KEY:-/etc/ssl/httpd/default.key} \
     /usr/bin/envsubst '$$FQDN $$DOCUMENTROOT $$NO_SSL_REDIRECT
     $$NO_USE_FCACHE $$EXPIRE_DAYS $$USE_SSL_CT $$USE_SSL_OSCP
     $$SSL_CERT $$SSL_KEY $$OSCP_RESOLV $$KUSANAGI_PROVISION' \
@@ -65,7 +65,7 @@ env NO_USE_NAXSI=${NO_USE_NAXSI:+#} \
 #//---------------------------------------------------------------------------
 #// create self-signed cert
 #//---------------------------------------------------------------------------
-if [ -f /etc/nginx/default.key -o -f /etc/nginx/default.crt ]; then
+if [ -f /etc/ssl/httpd/default.key -o -f /etc/ssl/httpd/default.pem ]; then
     /bin/true
 else
     keyfile=$(mktemp /tmp/k_ssl_key.XXXXXX)
@@ -76,10 +76,10 @@ else
      echo root@localhost.localdomain) | \
     openssl req -newkey rsa:2048 -keyout "${keyfile}" -nodes -x509 \
                 -days 365 -out "${certfile}" 2> /dev/null
-    mv "${keyfile}" /etc/nginx/default.key
-    chmod 0600 /etc/nginx/default.key
-    mv "${certfile}" /etc/nginx/default.crt
-    chmod 0644 /etc/nginx/default.crt
+    mv "${keyfile}" /etc/ssl/httpd/default.key
+    chmod 0600 /etc/ssl/httpd/default.key
+    mv "${certfile}" /etc/ssl/httpd/default.pem
+    chmod 0644 /etc/ssl/httpd/default.pem
 fi
 
 #echo 127.0.0.1 $FQDN >> /etc/hosts

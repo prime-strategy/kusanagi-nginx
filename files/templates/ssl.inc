@@ -1,8 +1,8 @@
 # SSL
-ssl_dhparam /etc/nginx/dhparam.key;
+ssl_dhparam /etc/ssl/httpd/dhparam.key;
 
 ssl_session_tickets     on;
-ssl_session_ticket_key  /etc/nginx/ssl_sess_ticket.key;
+ssl_session_ticket_key  /etc/ssl/httpd/ssl_sess_ticket.key;
 
 ssl_session_cache shared:SSL:1m;
 ssl_session_timeout  5m;

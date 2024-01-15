@@ -5,13 +5,13 @@
 server {
     listen 8080;
     listen [::]:8080;
-    
+
     server_name ${FQDN};
     ${NO_SSL_REDIRECT}rewrite ^(.*)$ https://${FQDN}$request_uri permanent; # SSL ONLY
 
     set $do_not_cache ${NO_USE_FCACHE}; ## page cache
     set $expire_days ${EXPIRE_DAYS}d;
-    
+
     charset UTF-8;
     client_max_body_size 16M;
     root ${DOCUMENTROOT};
@@ -20,7 +20,7 @@ server {
     include conf.d/favicon.inc;
     include conf.d/acme.inc;
     include conf.d/static.inc;
-    
+
     include conf.d/${KUSANAGI_PROVISION}.inc;
 }
 
@@ -31,12 +31,12 @@ server {
 
     set $do_not_cache ${NO_USE_FCACHE}; ## page cache
     set $expire_days ${EXPIRE_DAYS}d;
-    
+
     ssl_certificate     ${SSL_CERT};
     ssl_certificate_key ${SSL_KEY};
     ssl_ct ${USE_SSL_CT};
-    ssl_ct_static_scts /etc/nginx/scts;
-    
+    ssl_ct_static_scts /etc/ssl/httpd/scts;
+
     include conf.d/ssl.inc;
     ## OCSP stapling
     ssl_stapling ${USE_SSL_OSCP};
