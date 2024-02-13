@@ -84,7 +84,7 @@ RUN : \
     && lua_resty_lrucache_version=0.13 \
     && luajit_fork_version=2.1-20231117 \
     && stream_lua_nginx_version=0.0.14 \
-    && njs_version=0.8.2 \
+    && njs_version=0.8.3 \
     && apk add --no-cache --virtual .builddep $NGINX_DEPS \
     && export PREFIX=/usr \
     && export LUA_LIB_DIR=/usr/share/lua/5.1 \
