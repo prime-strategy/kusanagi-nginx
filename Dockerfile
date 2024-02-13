@@ -80,8 +80,8 @@ RUN : \
     && lua_resty_lrucache_version=0.13 \
     && luajit_fork_version=2.1-20231117 \
     && stream_lua_nginx_version=0.0.14 \
-    && njs_version=0.8.2 \
-    && openssl_version=3.1.4 \
+    && njs_version=0.8.3 \
+    && openssl_version=3.1.5 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
 \
@@ -101,7 +101,7 @@ RUN : \
             && make -j$(getconf _NPROCESSORS_ONLN) install DESTDIR=/tmp/build ) \
 \
 # openssl-quic
-        && curl -fSL https://github.com/quictls/openssl/archive/refs/tags/openssl-${openssl_version}-quic1.tar.gz | tar zxf - \
+        && curl -fSL https://github.com/quictls/openssl/archive/refs/tags/opernssl-${openssl_version}-quic1.tar.gz | tar zxf - \
 \
 # nginx
         && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
@@ -186,7 +186,7 @@ RUN : \
                 --with-http_geoip_module \
                 --with-http_perl_module \
                 --with-pcre-jit \
-                --with-openssl=/tmp/build/openssl-openssl-${openssl_version}-quic1 \
+                --with-openssl=/tmp/build/openssl-opernssl-${openssl_version}-quic1 \
                 --with-openssl-opt=enable-ktls \
                 --with-openssl-opt=enable-ec_nistp_64_gcc_128 \
                 --add-module=./extensions/ngx_devel_kit \
