@@ -6,8 +6,8 @@ apk-tools-2.14.0-r5
 brotli-libs-1.1.0-r1
 busybox-1.36.1-r15
 busybox-binsh-1.36.1-r15
-c-ares-1.24.0-r1
-ca-certificates-20230506-r0
+c-ares-1.27.0-r0
+ca-certificates-20240226-r0
 ca-certificates-bundle-20230506-r0
 curl-8.5.0-r0
 fontconfig-2.14.2-r4
