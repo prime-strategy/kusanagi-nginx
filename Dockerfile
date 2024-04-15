@@ -12,7 +12,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.25.3
-ENV OPENSSL_VERSION=3.1.4-r5
+ENV OPENSSL_VERSION=3.1.4-r6
 ENV NGINX_DEPS gnupg \
         ca-certificates \
         gcc \
@@ -78,7 +78,7 @@ RUN : \
     && ngx_devel_kit_version=0.3.3 \
     && lua_resty_core_version=0.1.28 \
     && lua_resty_lrucache_version=0.13 \
-    && luajit_fork_version=2.1-20231117 \
+    && luajit_fork_version=2.1-20240314 \
     && stream_lua_nginx_version=0.0.14 \
     && njs_version=0.8.3 \
     && openssl_version=3.1.5 \
