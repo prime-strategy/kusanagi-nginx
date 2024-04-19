@@ -11,7 +11,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.25.3
+ENV NGINX_VERSION=1.25.5
 ENV OPENSSL_VERSION=3.1.4-r6
 ENV NGINX_DEPS gnupg \
         ca-certificates \
@@ -52,6 +52,7 @@ COPY files/ct-submit.sh /usr/bin/ct-submit.sh
 COPY --from=build-go /go/bin/ct-submit /usr/bin/ct-submit
 COPY files/naxsi.patch /tmp/build/naxsi.patch
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
+COPY files/ngx_stream_ssl_srv_conf.patch /tmp/build/ngx_stream_ssl_srv_conf.patch
 COPY files/docker-entrypoint.sh /
 
 # add user
@@ -208,6 +209,7 @@ RUN : \
                 -Wno-stringop-overflow' \
             && patch -p1 < /tmp/build/naxsi.patch \
             && patch -p1 < /tmp/build/ngx_pagespeed.patch \
+            && patch -p1 < /tmp/build/ngx_stream_ssl_srv_conf.patch \
             && ./configure $CONF --with-cc-opt="$CFLAGS" \
     \
 # build
