@@ -11,7 +11,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.25.5
+ENV NGINX_VERSION=1.26.0
 ENV OPENSSL_VERSION=3.1.4-r6
 ENV NGINX_DEPS gnupg \
         ca-certificates \
@@ -81,7 +81,7 @@ RUN : \
     && lua_resty_lrucache_version=0.13 \
     && luajit_fork_version=2.1-20240314 \
     && stream_lua_nginx_version=0.0.14 \
-    && njs_version=0.8.3 \
+    && njs_version=0.8.4 \
     && openssl_version=3.1.5 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
@@ -105,7 +105,7 @@ RUN : \
         && curl -fSL https://github.com/quictls/openssl/archive/refs/tags/opernssl-${openssl_version}-quic1.tar.gz | tar zxf - \
 \
 # nginx
-        && curl -fSL http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
+        && curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
         && mkdir nginx-${NGINX_VERSION}/extensions \
         && (cd ./nginx-${NGINX_VERSION}/extensions \
             && curl -fSL https://github.com/grahamedgecombe/nginx-ct/archive/v${nginx_ct_version}.tar.gz | tar zxf - \
