@@ -83,7 +83,7 @@ RUN : \
     && stream_lua_nginx_version=0.0.14 \
     && njs_version=0.8.4 \
     && openssl_version=3.1.5 \
-    && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
+    && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS busybox=1.36.1-r16 \
 # lua resty config
 \
     && export PREFIX=/usr \
