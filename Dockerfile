@@ -1,18 +1,18 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.21.8-alpine3.19 as build-go
+FROM --platform=$BUILDPLATFORM golang:1.21.10-alpine3.20 as build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.19.1
+FROM --platform=$BUILDPLATFORM alpine:3.20.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.25.5
-ENV OPENSSL_VERSION=3.1.4-r6
+ENV OPENSSL_VERSION=3.3.0-r2
 ENV NGINX_DEPS gnupg \
         ca-certificates \
         gcc \
@@ -83,7 +83,7 @@ RUN : \
     && stream_lua_nginx_version=0.0.14 \
     && njs_version=0.8.3 \
     && openssl_version=3.1.5 \
-    && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS busybox=1.36.1-r16 \
+    && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
 \
     && export PREFIX=/usr \
