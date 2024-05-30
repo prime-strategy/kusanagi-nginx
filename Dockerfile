@@ -11,7 +11,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.26.0
+ENV NGINX_VERSION=1.26.1
 ENV OPENSSL_VERSION=3.3.0-r2
 ENV NGINX_DEPS gnupg \
         ca-certificates \
