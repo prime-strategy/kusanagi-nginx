@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.21.11-alpine3.20 as build-go
+FROM --platform=$BUILDPLATFORM golang:1.21.11-alpine3.20 AS build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
@@ -9,11 +9,11 @@ RUN : \
 FROM --platform=$BUILDPLATFORM alpine:3.20.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
-ENV PATH /bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
+ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.27.0
-ENV OPENSSL_VERSION=3.3.1-r0
-ENV NGINX_DEPS gnupg \
+ENV OPENSSL_VERSION=3.3.1-r1
+ENV NGINX_DEPS="gnupg \
         busybox=1.36.1-r29 \
         ca-certificates \
         gcc \
@@ -45,7 +45,7 @@ ENV NGINX_DEPS gnupg \
         libuuid \
         util-linux-dev \
         zlib-dev \
-        gettext
+        gettext"
 
 WORKDIR /tmp
 
