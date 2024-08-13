@@ -1,12 +1,12 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.22.5-alpine3.20 AS build-go
+FROM --platform=$BUILDPLATFORM golang:1.22.6-alpine3.20 AS build-go
 RUN : \
     && CT_SUBMIT_VERSION=1.1.2 \
     && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
 
-FROM --platform=$BUILDPLATFORM alpine:3.20.1
+FROM --platform=$BUILDPLATFORM alpine:3.20.2
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -14,7 +14,6 @@ ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 ENV NGINX_VERSION=1.27.0
 ENV OPENSSL_VERSION=3.3.1-r3
 ENV NGINX_DEPS="gnupg \
-        busybox=1.36.1-r29 \
         ca-certificates \
         gcc \
         g++ \
