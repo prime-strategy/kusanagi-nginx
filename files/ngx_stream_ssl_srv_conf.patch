@@ -12,41 +12,4 @@
          ngx_stream_ssl_module);
  
      ngx_array_t *certificates;
---- a/extensions/stream-lua-nginx-module/src/ngx_stream_lua_module.c	2024-04-19 09:55:27.510929219 +0900
-+++ b/extensions/stream-lua-nginx-module/src/ngx_stream_lua_module.c	2024-04-19 10:25:00.114067249 +0900
-@@ -864,12 +864,20 @@ ngx_stream_lua_merge_srv_conf(ngx_conf_t
-     ngx_stream_lua_srv_conf_t       *conf = child;
- 
- #if (NGX_STREAM_SSL)
-+#if nginx_version >= 1025005
-+    ngx_stream_ssl_srv_conf_t       *sscf;
-+#else
-     ngx_stream_ssl_conf_t           *sscf;
-+#endif
- 
-     dd("merge srv conf");
- 
-     sscf = ngx_stream_conf_get_module_srv_conf(cf, ngx_stream_ssl_module);
-+#if nginx_version >= 1025005
-+    if (sscf) {
-+#else
-     if (sscf && sscf->listen) {
-+#endif
-         if (conf->srv.ssl_client_hello_src.len == 0) {
-             conf->srv.ssl_client_hello_src = prev->srv.ssl_client_hello_src;
-             conf->srv.ssl_client_hello_src_key =
---- a/extensions/stream-lua-nginx-module/src/ngx_stream_lua_ssl_certby.c	2024-04-19 09:59:29.183538832 +0900
-+++ b/extensions/stream-lua-nginx-module/src/ngx_stream_lua_ssl_certby.c	2024-04-19 10:00:41.571058476 +0900
-@@ -1385,7 +1385,11 @@ ngx_stream_lua_ffi_ssl_verify_client(ngx
- 
-     ngx_stream_lua_ctx_t        *ctx;
-     ngx_ssl_conn_t              *ssl_conn;
-+#if nginx_version >= 1025005
-+    ngx_stream_ssl_srv_conf_t   *sscf;
-+#else
-     ngx_stream_ssl_conf_t       *sscf;
-+#endif
-     STACK_OF(X509)              *chain = ca_certs;
-     STACK_OF(X509_NAME)         *name_chain = NULL;
-     X509                        *x509 = NULL;
 
