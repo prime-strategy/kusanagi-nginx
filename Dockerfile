@@ -232,7 +232,7 @@ RUN : \
             | sort -u \
             | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
     )" \
-    && apk add --no-cache --virtual .nginx-rundeps $runDeps tzdata openssl curl \
+    && apk add --no-cache --virtual .nginx-rundeps $runDeps tzdata openssl \
     && apk del --purge .builddep \
     && mv /tmp/envsubst /usr/bin/envsubst \
 \
