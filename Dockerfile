@@ -1,17 +1,12 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.22.7-alpine3.20 AS build-go
-RUN : \
-    && CT_SUBMIT_VERSION=1.1.2 \
-    && go install github.com/grahamedgecombe/ct-submit@v${CT_SUBMIT_VERSION}
-
 FROM --platform=$BUILDPLATFORM alpine:3.20.3
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.27.1
+ENV NGINX_VERSION=1.27.2
 ENV OPENSSL_VERSION=3.3.2-r0
 ENV NGINX_DEPS="gnupg \
         ca-certificates \
@@ -49,11 +44,8 @@ ENV NGINX_DEPS="gnupg \
 
 WORKDIR /tmp
 
-COPY files/ct-submit.sh /usr/bin/ct-submit.sh
-COPY --from=build-go /go/bin/ct-submit /usr/bin/ct-submit
 COPY files/naxsi.patch /tmp/build/naxsi.patch
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
-COPY files/ngx_stream_ssl_srv_conf.patch /tmp/build/ngx_stream_ssl_srv_conf.patch
 COPY files/docker-entrypoint.sh /
 
 # add user
@@ -68,7 +60,6 @@ RUN : \
     && apk del --purge .user \
 # add build pkg
 \
-    && nginx_ct_version=1.3.2 \
     && ngx_cache_purge_version=2.3 \
     && ngx_brotli_version=1.0.0rc \
     && naxsi_tarball_name=naxsi \
@@ -80,9 +71,9 @@ RUN : \
     && ngx_devel_kit_version=0.3.3 \
     && lua_resty_core_version=0.1.29 \
     && lua_resty_lrucache_version=0.13 \
-    && luajit_fork_version=2.1-20240626 \
+    && luajit_fork_version=2.1-20240815 \
     && stream_lua_nginx_version=0.0.15 \
-    && njs_version=0.8.5 \
+    && njs_version=0.8.6 \
     && openssl_version=3.1.5 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
@@ -109,7 +100,6 @@ RUN : \
         && curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
         && mkdir nginx-${NGINX_VERSION}/extensions \
         && (cd ./nginx-${NGINX_VERSION}/extensions \
-            && curl -fSL https://github.com/grahamedgecombe/nginx-ct/archive/v${nginx_ct_version}.tar.gz | tar zxf - \
             && curl -fSL https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz | tar zxf - \
             && curl -fSL https://github.com/google/ngx_brotli/archive/v${ngx_brotli_version}.tar.gz | tar zxf - \
             && curl -fSL https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz | tar zxf - \
@@ -119,7 +109,6 @@ RUN : \
             && curl -fSL https://github.com/openresty/stream-lua-nginx-module/archive/v${stream_lua_nginx_version}.tar.gz | tar zxf - \
             && curl -fSL https://github.com/apache/incubator-pagespeed-ngx/archive/v${nps_version}-stable.tar.gz | tar zxf - \
             && curl -fSL https://github.com/nginx/njs/archive/refs/tags/${njs_version}.tar.gz | tar zxf - \
-            && mv nginx-ct-${nginx_ct_version} nginx-ct \
             && mv ngx_cache_purge-${ngx_cache_purge_version} ngx_cache_purge \
             && mv ngx_brotli-${ngx_brotli_version} ngx_brotli \
             && mv ngx_devel_kit-${ngx_devel_kit_version} ngx_devel_kit \
@@ -194,7 +183,6 @@ RUN : \
                 --add-module=./extensions/ngx_devel_kit \
                 --add-module=./extensions/${lua_nginx_module_name} \
                 --add-module=./extensions/ngx_cache_purge \
-                --add-module=./extensions/nginx-ct \
                 --add-module=./extensions/ngx_brotli \
                 --add-module=./extensions/${naxsi_tarball_name}/naxsi_src \
                 --add-module=./extensions/headers-more-nginx-module \
@@ -210,7 +198,6 @@ RUN : \
                 -Wno-stringop-overflow' \
             && patch -p1 < /tmp/build/naxsi.patch \
             && patch -p1 < /tmp/build/ngx_pagespeed.patch \
-            && patch -p1 < /tmp/build/ngx_stream_ssl_srv_conf.patch \
             && ./configure $CONF --with-cc-opt="$CFLAGS" \
     \
 # build
@@ -251,9 +238,7 @@ RUN : \
         /var/log/nginx \
     && install -m644 /etc/nginx/html/50x.html /var/www/html \
     && install -m644 /etc/nginx/html/index.html /var/www/html \
-    && mkdir -p -m755 /etc/nginx/scts /etc/nginx/naxsi.d /etc/nginx/conf.d/templates \
     && rm -rf /tmp/build \
-    && chmod 700 /usr/bin/ct-submit /usr/bin/ct-submit.sh \
     && ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
     && chmod 755 /docker-entrypoint.sh \
     && : # END of RUN
