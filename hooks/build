@@ -21,11 +21,13 @@ docker buildx ls
 docker buildx build \
     --progress plain \
     $DOCKERFILE_PATH_ARG \
+    --ulimit nofile=4096:4096 \
     -t $IMAGE_NAME .
 docker buildx build \
     --platform $ARCHITECTURES \
     --progress plain \
     $DOCKERFILE_PATH_ARG \
+    --ulimit nofile=4096:4096 \
     -t $IMAGE_NAME \
     --push .
 docker buildx imagetools inspect $IMAGE_NAME
