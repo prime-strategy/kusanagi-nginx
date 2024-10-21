@@ -7,7 +7,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.27.2
-ENV OPENSSL_VERSION=3.3.2-r0
+ENV OPENSSL_VERSION=3.3.2-r1
 ENV NGINX_DEPS="gnupg \
         ca-certificates \
         bash \
@@ -69,7 +69,7 @@ RUN : \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.27 \
     && ngx_devel_kit_version=0.3.3 \
-    && lua_resty_core_version=0.1.29 \
+    && lua_resty_core_version=0.1.30 \
     && lua_resty_lrucache_version=0.13 \
     && luajit_fork_version=2.1-20240815 \
     && stream_lua_nginx_version=0.0.15 \
