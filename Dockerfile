@@ -70,10 +70,10 @@ RUN : \
     && lua_nginx_module_version=0.10.27 \
     && ngx_devel_kit_version=0.3.3 \
     && lua_resty_core_version=0.1.30 \
-    && lua_resty_lrucache_version=0.13 \
-    && luajit_fork_version=2.1-20240815 \
+    && lua_resty_lrucache_version=0.15 \
+    && luajit_fork_version=2.1-20241104 \
     && stream_lua_nginx_version=0.0.15 \
-    && njs_version=0.8.6 \
+    && njs_version=0.8.7 \
     && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
