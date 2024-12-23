@@ -1,13 +1,13 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM alpine:3.20.3
+FROM --platform=$BUILDPLATFORM alpine:3.21.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.27.3
-ENV OPENSSL_VERSION=3.3.2-r1
+ENV OPENSSL_VERSION=3.3.2-r4
 ENV NGINX_DEPS="gnupg \
         ca-certificates \
         bash \
