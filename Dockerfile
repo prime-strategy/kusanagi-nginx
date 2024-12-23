@@ -1,13 +1,13 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM alpine:3.20.3
+FROM --platform=$BUILDPLATFORM alpine:3.21.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.26.2
-ENV OPENSSL_VERSION=3.3.2-r1
+ENV OPENSSL_VERSION=3.3.2-r4
 ENV NGINX_DEPS="gnupg \
         bash \
         ca-certificates \
@@ -71,9 +71,9 @@ RUN : \
     && ngx_devel_kit_version=0.3.3 \
     && lua_resty_core_version=0.1.30 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20241104 \
+    && luajit_fork_version=2.1-20241113 \
     && stream_lua_nginx_version=0.0.15 \
-    && njs_version=0.8.7 \
+    && njs_version=0.8.8 \
     && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
