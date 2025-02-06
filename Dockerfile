@@ -1,12 +1,12 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM alpine:3.21.0
+FROM --platform=$BUILDPLATFORM alpine:3.21.2
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.26.2
+ENV NGINX_VERSION=1.26.3
 ENV OPENSSL_VERSION=3.3.2-r4
 ENV NGINX_DEPS="gnupg \
         bash \
@@ -65,15 +65,15 @@ RUN : \
     && naxsi_tarball_name=naxsi \
     && naxsi_version=1.3 \
     && nps_version=1.13.35.2 \
-    && headers_more_module_version=0.37 \
+    && headers_more_module_version=0.38 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.27 \
+    && lua_nginx_module_version=0.10.28 \
     && ngx_devel_kit_version=0.3.3 \
-    && lua_resty_core_version=0.1.30 \
+    && lua_resty_core_version=0.1.31 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20241113 \
-    && stream_lua_nginx_version=0.0.15 \
-    && njs_version=0.8.8 \
+    && luajit_fork_version=2.1-20250117 \
+    && stream_lua_nginx_version=0.0.16 \
+    && njs_version=0.8.9 \
     && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
