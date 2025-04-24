@@ -1,12 +1,16 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
+FROM --platform=$BUILDPLATFORM golang:1.24.2-alpine3.21 AS build-go
+COPY files/httpd_check.go /tmp
+RUN go build /tmp/httpd_check.go
+
 FROM --platform=$BUILDPLATFORM alpine:3.21.3
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.27.5
+ENV NGINX_VERSION=1.28.0
 ENV OPENSSL_VERSION=3.3.3-r0
 ENV NGINX_DEPS="gnupg \
         ca-certificates \
@@ -44,6 +48,7 @@ ENV NGINX_DEPS="gnupg \
 
 WORKDIR /tmp
 
+COPY --from=build-go /go/httpd_check /usr/local/bin/httpd_check
 COPY files/naxsi.patch /tmp/build/naxsi.patch
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
 COPY files/docker-entrypoint.sh /
@@ -188,7 +193,7 @@ RUN : \
                 --add-module=./extensions/headers-more-nginx-module \
                 --add-module=./extensions/stream-lua-nginx-module \
                 --add-dynamic-module=./extensions/njs/nginx" \
-            && CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
+            && export CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
                 -fexceptions -fstack-protector \
                 -m64 -mtune=generic \
                 -Wno-deprecated-declarations \
@@ -198,23 +203,34 @@ RUN : \
                 -Wno-stringop-overflow' \
             && patch -p1 < /tmp/build/naxsi.patch \
             && patch -p1 < /tmp/build/ngx_pagespeed.patch \
-            && ./configure $CONF --with-cc-opt="$CFLAGS" \
-    \
-# build
-            && make -j$(getconf _NPROCESSORS_ONLN) \
+            && NCPUS=$(getconf _NPROCESSORS_ONLN) \
+            && ./configure $CONF  \
+            && make -j $NCPUS \
+# njs
+            && (cd  ./extensions/njs; \
+                ./configure \
+                    --no-pcre2 \
+                    --no-openssl \
+                    --no-zlib \
+                    --no-libxml2 \
+\
+# njs
+            && make -j $NCPUS njs) \
             && (find . -type f -a -name 'nginx' -o -name '*.so*' | xargs strip ; true) \
             && (find . -type f -a -name '*.so*' | xargs chmod 755 ; true) \
-            && make -j$(getconf _NPROCESSORS_ONLN) install \
+            && make -j $NCPUS install \
+            && strip ./extensions/njs/build/njs  \
+            && cp -p ./extensions/njs/build/njs /usr/bin/njs \
             && mkdir -p /usr/lib/nginx/modules /etc/nginx/naxsi.d \
             && install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
             && (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
         ) \
     ) \
     && mv /usr/bin/envsubst /tmp/ \
-\
+    \
 # remove pkg
     && runDeps="$( \
-        scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /tmp/envsubst \
+        scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/bin/njs /usr/lib/nginx/modules/*.so /tmp/envsubst \
             | tr ',' '\n' \
             | sort -u \
             | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
@@ -243,6 +259,7 @@ RUN : \
     && chmod 755 /docker-entrypoint.sh \
     && : # END of RUN
 
+
 COPY files/nginx.conf /etc/nginx/nginx.conf
 COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
 COPY files/fastcgi_params /etc/nginx/fastcgi_params
@@ -267,6 +284,6 @@ VOLUME /home/kusanagi
 
 USER httpd
 WORKDIR /var/www/html
-HEALTHCHECK --interval=10s --timeout=3s CMD curl -f http://127.0.0.1:8000/ > /dev/null  || exit 1
+HEALTHCHECK --interval=10s --timeout=3s CMD /usr/local/bin/httpd_check
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
