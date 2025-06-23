@@ -1,13 +1,17 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM alpine:3.21.3
+FROM --platform=$BUILDPLATFORM golang:1.24.4-alpine3.22 AS build-go
+COPY files/httpd_check.go /tmp
+RUN go build /tmp/httpd_check.go
+
+FROM --platform=$BUILDPLATFORM alpine:3.22.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.26.3
-ENV OPENSSL_VERSION=3.3.3-r0
+ENV OPENSSL_VERSION=3.5.0-r0
 ENV NGINX_DEPS="gnupg \
         bash \
         ca-certificates \
@@ -34,7 +38,6 @@ ENV NGINX_DEPS="gnupg \
         geoip-dev \
         gd-dev \
         brotli-dev \
-        ruby-etc \
         ruby-dev \
         fontconfig-dev \
         libuuid \
@@ -46,6 +49,7 @@ WORKDIR /tmp
 
 COPY files/naxsi.patch /tmp/build/naxsi.patch
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
+COPY files/openssl-3.0.0-3.3.0.patch /tmp/build/openssl-3.0.0-3.3.0.patch
 COPY files/docker-entrypoint.sh /
 
 # add user
@@ -68,34 +72,36 @@ RUN : \
     && headers_more_module_version=0.38 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.28 \
-    && ngx_devel_kit_version=0.3.3 \
+    && ngx_devel_kit_version=0.3.4 \
     && lua_resty_core_version=0.1.31 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20250117 \
+    && luajit_fork_version=2.1-20250529 \
     && stream_lua_nginx_version=0.0.16 \
-    && njs_version=0.8.9 \
+    && njs_version=0.9.0 \
     && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
 \
     && export PREFIX=/usr \
     && export LUA_LIB_DIR=/usr/share/lua/5.1 \
+    && NCPUS=$(getconf _NPROCESSORS_ONLN) \
     && (cd build \
         && curl -fSL https://github.com/openresty/lua-resty-core/archive/v${lua_resty_core_version}.tar.gz | tar zxf - \
         && (cd lua-resty-core-${lua_resty_core_version} \
-            && make -j$(getconf _NPROCESSORS_ONLN) install ) \
+            && make -j$NCPU install ) \
         && curl -fSL https://github.com/openresty/lua-resty-lrucache/archive/v${lua_resty_lrucache_version}.tar.gz | tar zxf - \
         && (cd lua-resty-lrucache-${lua_resty_lrucache_version} \
-            && make -j$(getconf _NPROCESSORS_ONLN) install ) \
+            && make -j$NCPU install ) \
         && curl -fSL https://github.com/openresty/luajit2/archive/v${luajit_fork_version}.tar.gz | tar zxf - \
         && (cd luajit2-${luajit_fork_version} \
             && sed -i -e 's,/usr/local,/usr,' Makefile \
             && sed -i -e 's,/usr/local,/usr,' -e 's,LUA_LMULTILIB\t"lib",LUA_LMULTILIB "lib64",' src/luaconf.h \
-            && make -j$(getconf _NPROCESSORS_ONLN) install DESTDIR=/tmp/build ) \
+            && make -j$NCPU install DESTDIR=/tmp/build ) \
 \
 # openssl-quic
-        && echo https://github.com/quictls/openssl/archive/refs/tags/openssl-${openssl_version}-quic1.tar.gz \
         && curl -fSL https://github.com/quictls/openssl/archive/refs/tags/openssl-${openssl_version}-quic1.tar.gz | tar zxf - \
+        && (cd openssl-openssl-${openssl_version}-quic1 \
+            && patch -p1 < /tmp/build/openssl-3.0.0-3.3.0.patch) \
 \
 # nginx
         && curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
@@ -189,7 +195,7 @@ RUN : \
                 --add-module=./extensions/headers-more-nginx-module \
                 --add-module=./extensions/stream-lua-nginx-module \
                 --add-dynamic-module=./extensions/njs/nginx" \
-            && CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
+            && export CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
                 -fexceptions -fstack-protector \
                 -m64 -mtune=generic \
                 -Wno-deprecated-declarations \
@@ -200,12 +206,23 @@ RUN : \
             && patch -p1 < /tmp/build/naxsi.patch \
             && patch -p1 < /tmp/build/ngx_pagespeed.patch \
             && ./configure $CONF --with-cc-opt="$CFLAGS" \
-    \
+\
 # build
-            && make -j$(getconf _NPROCESSORS_ONLN) \
+            && ./configure $CONF  \
+            && make -j $NCPUS \
+# njs
+            && (cd  ./extensions/njs; \
+                ./configure \
+                    --no-pcre2 \
+                    --no-openssl \
+                    --no-zlib \
+                    --no-libxml2 \
+\
+# njs
+                && make -j $NCPUS njs) \
             && (find . -type f -a -name 'nginx' -o -name '*.so*' | xargs strip ; true) \
             && (find . -type f -a -name '*.so*' | xargs chmod 755 ; true) \
-            && make -j$(getconf _NPROCESSORS_ONLN) install \
+            && make -j $NCPUS install \
             && mkdir -p /usr/lib/nginx/modules /etc/nginx/naxsi.d \
             && install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
             && (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
@@ -269,6 +286,6 @@ VOLUME /home/kusanagi
 
 USER httpd
 WORKDIR /var/www/html
-HEALTHCHECK --interval=10s --timeout=3s CMD curl -f http://127.0.0.1:8000/ > /dev/null  || exit 1
+HEALTHCHECK --interval=10s --timeout=3s CMD /usr/local/bin/httpd_check
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
