@@ -1,17 +1,17 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.24.2-alpine3.21 AS build-go
+FROM --platform=$BUILDPLATFORM golang:1.24.4-alpine3.22 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
-FROM --platform=$BUILDPLATFORM alpine:3.21.3
+FROM --platform=$BUILDPLATFORM alpine:3.22.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.27.5
-ENV OPENSSL_VERSION=3.3.3-r0
+ENV OPENSSL_VERSION=3.5.0-r0
 ENV NGINX_DEPS="gnupg \
         ca-certificates \
         bash \
@@ -38,7 +38,6 @@ ENV NGINX_DEPS="gnupg \
         geoip-dev \
         gd-dev \
         brotli-dev \
-        ruby-etc \
         ruby-dev \
         fontconfig-dev \
         libuuid \
@@ -50,6 +49,7 @@ WORKDIR /tmp
 
 COPY --from=build-go /go/httpd_check /usr/local/bin/httpd_check
 COPY files/naxsi.patch /tmp/build/naxsi.patch
+COPY files/openssl-3.0.0-3.3.0.patch /tmp/build/openssl-3.0.0-3.3.0.patch
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
 COPY files/docker-entrypoint.sh /
 
@@ -76,9 +76,9 @@ RUN : \
     && ngx_devel_kit_version=0.3.4 \
     && lua_resty_core_version=0.1.31 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20250117 \
+    && luajit_fork_version=2.1-20250529 \
     && stream_lua_nginx_version=0.0.16 \
-    && njs_version=0.8.10 \
+    && njs_version=0.9.0 \
     && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
@@ -98,8 +98,10 @@ RUN : \
             && sed -i -e 's,/usr/local,/usr,' -e 's,LUA_LMULTILIB\t"lib",LUA_LMULTILIB "lib64",' src/luaconf.h \
             && make -j$(getconf _NPROCESSORS_ONLN) install DESTDIR=/tmp/build ) \
 \
-# openssl-quic
+# openssl-quic(with openssl-3.3.3 patch)
         && curl -fSL https://github.com/quictls/openssl/archive/refs/tags/openssl-${openssl_version}-quic1.tar.gz | tar zxf - \
+        && (cd openssl-openssl-${openssl_version}-quic1 \
+            && patch -p1 < /tmp/build/openssl-3.0.0-3.3.0.patch) \
 \
 # nginx
         && curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
