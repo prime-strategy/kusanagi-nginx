@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.24.4-alpine3.22 AS build-go
+FROM --platform=$BUILDPLATFORM golang:1.24.6-alpine3.22 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
@@ -271,10 +271,8 @@ COPY files/security.conf /etc/nginx/conf.d/security.conf
 COPY files/status.conf /etc/nginx/conf.d/00-status.conf
 COPY files/quic_default_server.conf /etc/nginx/conf.d/quic_default_server.conf
 
-RUN apk add --no-cache --virtual .curl curl \
-    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /tmp \
+RUN wget -q -O - https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /tmp \
     && /tmp/trivy filesystem --skip-files /tmp/trivy --exit-code 1 --no-progress / \
-    && apk del .curl \
     && rm /tmp/trivy \
     && :
 
