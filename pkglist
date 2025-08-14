@@ -1,13 +1,13 @@
 alpine-baselayout-3.7.0-r0
 alpine-baselayout-data-3.7.0-r0
 alpine-keys-2.5-r0
-alpine-release-3.22.0-r0
+alpine-release-3.22.1-r0
 aom-libs-3.12.1-r0
 apk-tools-2.14.9-r2
 brotli-libs-1.1.0-r2
 busybox-1.37.0-r18
 busybox-binsh-1.37.0-r18
-ca-certificates-bundle-20241121-r2
+ca-certificates-bundle-20250619-r0
 fontconfig-2.15.0-r3
 freetype-2.13.3-r0
 geoip-1.6.12-r6
