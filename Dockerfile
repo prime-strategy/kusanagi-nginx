@@ -5,19 +5,19 @@ FROM --platform=$BUILDPLATFORM golang:1.24.6-alpine3.22 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
-FROM --platform=$BUILDPLATFORM alpine:3.22.0
+FROM --platform=$BUILDPLATFORM alpine:3.22.1
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.27.5
-ENV OPENSSL_VERSION=3.5.1-r0
+ENV OPENSSL_VERSION=3.5.2-r0
 
 WORKDIR /tmp
 
 COPY --from=build-go /go/httpd_check /usr/local/bin/httpd_check
 COPY files/naxsi.patch /tmp/build/naxsi.patch
-COPY files/openssl-3.0.0-3.3.0.patch.gz /tmp/build/openssl-3.0.0-3.3.0.patch.gz
+COPY files/openssl-3.3.0-3.3.4.patch.gz /tmp/build/openssl-3.3.0-3.3.4.patch.gz
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
 COPY files/docker-entrypoint.sh /
 
@@ -70,7 +70,7 @@ RUN : \
     && naxsi_tarball_name=naxsi \
     && naxsi_version=1.3 \
     && nps_version=1.13.35.2 \
-    && headers_more_module_version=0.38 \
+    && headers_more_module_version=0.39 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.28 \
     && ngx_devel_kit_version=0.3.4 \
@@ -78,7 +78,7 @@ RUN : \
     && lua_resty_lrucache_version=0.15 \
     && luajit_fork_version=2.1-20250529 \
     && stream_lua_nginx_version=0.0.16 \
-    && njs_version=0.9.0 \
+    && njs_version=0.9.1 \
     && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
@@ -101,7 +101,7 @@ RUN : \
 # openssl-quic(with openssl-3.3.3 patch)
         && curl -fSL https://github.com/quictls/openssl/archive/refs/tags/openssl-${openssl_version}-quic1.tar.gz | tar zxf - \
         && (cd openssl-openssl-${openssl_version}-quic1 \
-            && gzcat /tmp/build/openssl-3.0.0-3.3.0.patch.gz | patch -p1) \
+            && gzcat /tmp/build/openssl-3.3.0-3.3.4.patch.gz | patch -p1) \
 \
 # nginx
         && curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
