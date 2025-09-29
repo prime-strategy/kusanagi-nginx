@@ -11,7 +11,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.28.0
-ENV OPENSSL_VERSION=3.5.2-r0
+ENV OPENSSL_VERSION=3.5.3-r1
 
 WORKDIR /tmp
 
