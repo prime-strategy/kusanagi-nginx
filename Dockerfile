@@ -11,13 +11,13 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.29.1
-ENV OPENSSL_VERSION=3.5.3-r1
+ENV OPENSSL_VERSION=3.5.4-r0
 
 WORKDIR /tmp
 
 COPY --from=build-go /go/httpd_check /usr/local/bin/httpd_check
 COPY files/naxsi.patch /tmp/build/naxsi.patch
-COPY files/openssl-3.3.0-3.3.4.patch.gz /tmp/build/openssl-3.3.0-3.3.4.patch.gz
+COPY files/openssl-3.3.0-3.3.5.patch.gz /tmp/build/openssl-3.3.0-3.3.5.patch.gz
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
 COPY files/docker-entrypoint.sh /
 
