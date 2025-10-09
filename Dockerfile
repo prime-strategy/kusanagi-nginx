@@ -10,7 +10,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.29.1
+ENV NGINX_VERSION=1.29.2
 ENV OPENSSL_VERSION=3.5.4-r0
 
 WORKDIR /tmp
@@ -78,7 +78,7 @@ RUN : \
     && lua_resty_lrucache_version=0.15 \
     && luajit_fork_version=2.1-20250826 \
     && stream_lua_nginx_version=0.0.16 \
-    && njs_version=0.9.2 \
+    && njs_version=0.9.3 \
     && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
