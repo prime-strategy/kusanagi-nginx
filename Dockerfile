@@ -1,11 +1,11 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.24.6-alpine3.22 AS build-go
+FROM --platform=$BUILDPLATFORM golang:1.25.2-alpine3.22 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
-FROM --platform=$BUILDPLATFORM alpine:3.22.1
+FROM --platform=$BUILDPLATFORM alpine:3.22.2
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -76,9 +76,9 @@ RUN : \
     && ngx_devel_kit_version=0.3.4 \
     && lua_resty_core_version=0.1.31 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20250826 \
+    && luajit_fork_version=2.1-20251022 \
     && stream_lua_nginx_version=0.0.16 \
-    && njs_version=0.9.2 \
+    && njs_version=0.9.4 \
     && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
