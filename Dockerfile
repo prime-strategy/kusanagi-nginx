@@ -24,6 +24,7 @@ COPY files/docker-entrypoint.sh /
 # add user
 RUN : \
     # prep
+    && apk upgrade busybox --no-cache \
     && apk add --no-cache --virtual .user shadow \
     && groupadd -g 1001 www \
     && useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
