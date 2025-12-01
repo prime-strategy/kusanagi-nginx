@@ -4,7 +4,7 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 
 # Versions (tags)
 
-- 1.27.5-r12
+- 1.27.5-r13
 
 # Image Content
 
