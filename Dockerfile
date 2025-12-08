@@ -1,11 +1,11 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.25.4-alpine3.22 AS build-go
+FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.23 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
-FROM --platform=$BUILDPLATFORM alpine:3.22.2
+FROM --platform=$BUILDPLATFORM alpine:3.23.0
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -17,7 +17,6 @@ WORKDIR /tmp
 
 COPY --from=build-go /go/httpd_check /usr/local/bin/httpd_check
 COPY files/naxsi.patch /tmp/build/naxsi.patch
-COPY files/openssl-3.3.0-3.3.5.patch.gz /tmp/build/openssl-3.3.0-3.3.5.patch.gz
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
 COPY files/docker-entrypoint.sh /
 
@@ -48,6 +47,7 @@ RUN : \
         musl-dev \
         perl-dev \
         openssl=$OPENSSL_VERSION \
+        openssl-dev \
         libxslt-dev \
         linux-headers \
         libpng-dev \
@@ -98,11 +98,6 @@ RUN : \
             && sed -i -e 's,/usr/local,/usr,' Makefile \
             && sed -i -e 's,/usr/local,/usr,' -e 's,LUA_LMULTILIB\t"lib",LUA_LMULTILIB "lib64",' src/luaconf.h \
             && make -j$(getconf _NPROCESSORS_ONLN) install DESTDIR=/tmp/build ) \
-\
-# openssl-quic-3.3.3
-        && curl -fSL https://github.com/quictls/openssl/archive/refs/tags/openssl-${openssl_version}-quic1.tar.gz | tar zxf - \
-        && (cd openssl-openssl-${openssl_version}-quic1 \
-            && gzcat /tmp/build/openssl-3.3.0-3.3.5.patch.gz | patch -p1) \
 \
 # nginx
         && curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
@@ -185,7 +180,6 @@ RUN : \
                 --with-http_geoip_module \
                 --with-http_perl_module \
                 --with-pcre-jit \
-                --with-openssl=/tmp/build/openssl-openssl-${openssl_version}-quic1 \
                 --with-openssl-opt=enable-ktls \
                 --with-openssl-opt=enable-ec_nistp_64_gcc_128 \
                 --add-module=./extensions/ngx_devel_kit \
