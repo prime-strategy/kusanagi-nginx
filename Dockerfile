@@ -73,14 +73,13 @@ RUN : \
     && nps_version=1.13.35.2 \
     && headers_more_module_version=0.39 \
     && lua_nginx_module_name=lua-nginx-module \
-    && lua_nginx_module_version=0.10.28 \
+    && lua_nginx_module_version=0.10.29 \
     && ngx_devel_kit_version=0.3.4 \
-    && lua_resty_core_version=0.1.31 \
+    && lua_resty_core_version=0.1.32 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20251022 \
-    && stream_lua_nginx_version=0.0.16 \
+    && luajit_fork_version=2.1-20251030 \
+    && stream_lua_nginx_version=0.0.17 \
     && njs_version=0.9.4 \
-    && openssl_version=3.3.0 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
 \
