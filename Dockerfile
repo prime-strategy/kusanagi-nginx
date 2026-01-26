@@ -5,7 +5,7 @@ FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.23 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
-FROM --platform=$BUILDPLATFORM alpine:3.23.0
+FROM --platform=$BUILDPLATFORM alpine:3.23.2
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
