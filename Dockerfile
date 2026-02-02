@@ -5,13 +5,13 @@ FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.23 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
-FROM --platform=$BUILDPLATFORM alpine:3.23.2
+FROM --platform=$BUILDPLATFORM alpine:3.23.3
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.29.4
-ENV OPENSSL_VERSION=3.5.4-r0
+ENV OPENSSL_VERSION=3.5.5-r0
 
 WORKDIR /tmp
 
@@ -77,9 +77,9 @@ RUN : \
     && ngx_devel_kit_version=0.3.4 \
     && lua_resty_core_version=0.1.32 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20251030 \
+    && luajit_fork_version=2.1-20260114 \
     && stream_lua_nginx_version=0.0.17 \
-    && njs_version=0.9.4 \
+    && njs_version=0.9.5 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
 \
