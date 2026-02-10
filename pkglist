@@ -2,7 +2,7 @@ alpine-baselayout-3.7.1-r8
 alpine-baselayout-data-3.7.1-r8
 alpine-keys-2.6-r0
 alpine-release-3.23.3-r0
-aom-libs-3.13.1-r0
+aom-libs-3.13.1-r1
 apk-tools-3.0.3-r1
 brotli-libs-1.2.0-r0
 busybox-1.37.0-r30
@@ -17,7 +17,7 @@ libbsd-0.12.2-r0
 libbz2-1.0.8-r6
 libcrypto3-3.5.5-r0
 libdav1d-1.5.2-r0
-libexpat-2.7.3-r0
+libexpat-2.7.4-r0
 libgcc-15.2.0-r2
 libgd-2.3.3-r10
 libice-1.1.2-r0

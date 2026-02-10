@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.23 AS build-go
+FROM --platform=$BUILDPLATFORM golang:1.25.7-alpine3.23 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
@@ -10,7 +10,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.29.4
+ENV NGINX_VERSION=1.29.5
 ENV OPENSSL_VERSION=3.5.5-r0
 
 WORKDIR /tmp
