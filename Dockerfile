@@ -11,7 +11,6 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
 ENV NGINX_VERSION=1.28.2
-ENV OPENSSL_VERSION=3.5.5-r0
 
 WORKDIR /tmp
 
@@ -23,7 +22,10 @@ COPY files/docker-entrypoint.sh /
 # add user
 RUN : \
     # prep
-    && apk upgrade busybox --no-cache \
+    && apk upgrade --no-cache \
+        busybox \
+        zlib \
+        openssl \
     && apk add --no-cache --virtual .user shadow \
     && groupadd -g 1001 www \
     && useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
@@ -46,7 +48,6 @@ RUN : \
         curl \
         musl-dev \
         perl-dev \
-        openssl=$OPENSSL_VERSION \
         openssl-dev \
         libxslt-dev \
         linux-headers \
