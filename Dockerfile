@@ -23,7 +23,10 @@ COPY files/docker-entrypoint.sh /
 # add user
 RUN : \
     # prep
-    && apk upgrade busybox --no-cache \
+    && apk upgrade --no-cache \
+        busybox \
+        openssl \
+        zlib \
     && apk add --no-cache --virtual .user shadow \
     && groupadd -g 1001 www \
     && useradd -d /var/lib/www -s /bin/nologin -g www -M -u 1001 httpd \
@@ -46,7 +49,6 @@ RUN : \
         curl \
         musl-dev \
         perl-dev \
-        openssl=$OPENSSL_VERSION \
         openssl-dev \
         libxslt-dev \
         linux-headers \
