@@ -10,12 +10,11 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.28.2
+ENV NGINX_VERSION=1.28.3
 
 WORKDIR /tmp
 
 COPY --from=build-go /go/httpd_check /usr/local/bin/httpd_check
-COPY files/naxsi.patch /tmp/build/naxsi.patch
 COPY files/ngx_pagespeed.patch /tmp/build/ngx_pagespeed.patch
 COPY files/docker-entrypoint.sh /
 
@@ -57,7 +56,7 @@ RUN : \
         expat-dev \
         tiff-dev \
         libxcb-dev \
-        pcre-dev \
+        pcre2-dev \
         geoip-dev \
         gd-dev \
         brotli-dev \
@@ -70,7 +69,8 @@ RUN : \
     && ngx_cache_purge_version=2.3 \
     && ngx_brotli_version=1.0.0rc \
     && naxsi_tarball_name=naxsi \
-    && naxsi_version=1.3 \
+    && naxsi_version=1.7 \
+    && libinjection_version=b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9 \
     && nps_version=1.13.35.2 \
     && headers_more_module_version=0.39 \
     && lua_nginx_module_name=lua-nginx-module \
@@ -108,7 +108,8 @@ RUN : \
             && curl -fSL https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz | tar zxf - \
             && curl -fSL https://github.com/openresty/headers-more-nginx-module/archive/v${headers_more_module_version}.tar.gz | tar zxf - \
             && curl -fSL https://github.com/openresty/${lua_nginx_module_name}/archive/v${lua_nginx_module_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/nbs-system/naxsi/archive/${naxsi_version}.tar.gz | tar zxf - \
+            && curl -fSL https://github.com/wargio/naxsi/archive/${naxsi_version}.tar.gz | tar zxf - \
+            && curl -fSL https://github.com/libinjection/libinjection/archive/${libinjection_version}.tar.gz | tar zxf - \
             && curl -fSL https://github.com/openresty/stream-lua-nginx-module/archive/v${stream_lua_nginx_version}.tar.gz | tar zxf - \
             && curl -fSL https://github.com/apache/incubator-pagespeed-ngx/archive/v${nps_version}-stable.tar.gz | tar zxf - \
             && curl -fSL https://github.com/nginx/njs/archive/refs/tags/${njs_version}.tar.gz | tar zxf - \
@@ -117,6 +118,8 @@ RUN : \
             && mv ngx_devel_kit-${ngx_devel_kit_version} ngx_devel_kit \
             && mv ${lua_nginx_module_name}-${lua_nginx_module_version} ${lua_nginx_module_name} \
             && mv ${naxsi_tarball_name}-${naxsi_version} ${naxsi_tarball_name} \
+            && rmdir ${naxsi_tarball_name}/naxsi_src/libinjection \
+            && mv libinjection-${libinjection_version} ${naxsi_tarball_name}/naxsi_src/libinjection \
             && mv headers-more-nginx-module-${headers_more_module_version} headers-more-nginx-module \
             && mv stream-lua-nginx-module-${stream_lua_nginx_version} stream-lua-nginx-module \
             && nps_dir=$(find . -name "*pagespeed-ngx-*" -type d) \
@@ -179,7 +182,6 @@ RUN : \
                 --with-http_image_filter_module \
                 --with-http_geoip_module \
                 --with-http_perl_module \
-                --with-pcre-jit \
                 --with-openssl-opt=enable-ktls \
                 --with-openssl-opt=enable-ec_nistp_64_gcc_128 \
                 --add-module=./extensions/ngx_devel_kit \
@@ -198,7 +200,6 @@ RUN : \
                 -Wno-unused-parameter \
                 -Wno-stringop-truncation \
                 -Wno-stringop-overflow' \
-            && patch -p1 < /tmp/build/naxsi.patch \
             && patch -p1 < /tmp/build/ngx_pagespeed.patch \
             && NCPUS=$(getconf _NPROCESSORS_ONLN) \
             && ./configure $CONF  \
@@ -206,7 +207,6 @@ RUN : \
 # njs
             && (cd  ./extensions/njs; \
                 ./configure \
-                    --no-pcre2 \
                     --no-openssl \
                     --no-zlib \
                     --no-libxml2 \
@@ -219,7 +219,7 @@ RUN : \
             && strip ./extensions/njs/build/njs  \
             && cp -p ./extensions/njs/build/njs /usr/bin/njs \
             && mkdir -p /usr/lib/nginx/modules /etc/nginx/naxsi.d \
-            && install -m644 extensions/${naxsi_tarball_name}/naxsi_config/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
+            && install -m644 extensions/${naxsi_tarball_name}/naxsi_rules/naxsi_core.rules /etc/nginx/naxsi.d/naxsi_core.rules.conf \
             && (for so in `find extensions -type f -name '*.so'`; do mv $so /usr/lib/nginx/modules ; done; true) \
         ) \
     ) \
@@ -258,6 +258,7 @@ RUN : \
 
 
 COPY files/nginx.conf /etc/nginx/nginx.conf
+COPY files/mime.types /etc/nginx/mime.types
 COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
 COPY files/fastcgi_params /etc/nginx/fastcgi_params
 COPY files/naxsi.d/ /etc/nginx/naxsi.d/
@@ -265,6 +266,9 @@ COPY files/templates/ /etc/nginx/conf.d/
 COPY files/security.conf /etc/nginx/conf.d/security.conf
 COPY files/status.conf /etc/nginx/conf.d/00-status.conf
 COPY files/quic_default_server.conf /etc/nginx/conf.d/quic_default_server.conf
+COPY files/naxsi.d /etc/nginx/
+COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
+COPY files/security.conf /etc/nginx/conf.d/security.conf
 
 RUN wget -q -O - https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /tmp \
     && /tmp/trivy filesystem --skip-files /tmp/trivy --exit-code 1 --no-progress / \
