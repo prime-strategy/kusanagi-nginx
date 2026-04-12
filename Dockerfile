@@ -23,6 +23,8 @@ RUN set -x \
     # prep
     && apk upgrade --no-cache \
         busybox \
+        musl \
+        musl-utils \
         openssl \
         zlib \
     && apk add --no-cache --virtual .user shadow \
