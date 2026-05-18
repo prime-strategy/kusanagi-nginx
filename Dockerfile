@@ -10,7 +10,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.30.1
+ENV NGINX_VERSION=1.31.0
 
 WORKDIR /tmp
 
