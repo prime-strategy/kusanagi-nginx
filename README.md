@@ -4,7 +4,7 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 
 # Versions (tags)
 
-- 1.30.1-r0
+- 1.30.2-r0
 
 # Image Content
 
@@ -21,5 +21,5 @@ Nginx Web Server( for KUSANAGI Runs on Docker )
 - ngx_cache_purge 2.3
 - ngx_devel_kit 0.3.4
 - nps_version 1.13.35.2
-- njs_version 0.9.8
+- njs_version 0.9.9
 
