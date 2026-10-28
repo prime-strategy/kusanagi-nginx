@@ -1,16 +1,16 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine3.24 AS build-go
+FROM --platform=$BUILDPLATFORM golang:1.26.10-alpine3.24 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
-FROM --platform=$BUILDPLATFORM alpine:3.24.1
+FROM --platform=$BUILDPLATFORM alpine:3.24.3
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.30.3
+ENV NGINX_VERSION=1.30.6
 
 WORKDIR /tmp
 
@@ -74,15 +74,15 @@ RUN set -x \
     && naxsi_version=1.7 \
     && libinjection_version=b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9 \
     && nps_version=1.13.35.2 \
-    && headers_more_module_version=0.39 \
+    && headers_more_module_version=0.40 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.29 \
     && ngx_devel_kit_version=0.3.4 \
     && lua_resty_core_version=0.1.32 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20260415 \
+    && luajit_fork_version=2.1-20261021 \
     && stream_lua_nginx_version=0.0.17 \
-    && njs_version=0.9.9 \
+    && njs_version=1.0.2 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
 \
@@ -271,12 +271,6 @@ COPY files/quic_default_server.conf /etc/nginx/conf.d/quic_default_server.conf
 COPY files/naxsi.d /etc/nginx/
 COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
 COPY files/security.conf /etc/nginx/conf.d/security.conf
-
-
-RUN wget -q -O - https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /tmp \
-    && /tmp/trivy filesystem --skip-files /tmp/trivy --exit-code 1 --no-progress / \
-    && rm /tmp/trivy \
-    && :
 
 EXPOSE 8080/tcp
 EXPOSE 8443/tcp
