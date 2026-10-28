@@ -134,9 +134,9 @@ RUN set -x \
             && export LUAJIT_LIB=/tmp/build/usr/lib \
             && CC=/usr/bin/cc \
             && if [ "$TARGETARCH" = "amd64" ]; then \
-                    aioOpts='--with-file-aio' \
-               else
-                    aioOpts='' \
+                    aioOpts='--with-file-aio'; \
+               else \
+                    aioOpts=''; \
                fi \
             && CXX=/usr/bin/c++ \
             && CONF="--prefix=/etc/nginx \
