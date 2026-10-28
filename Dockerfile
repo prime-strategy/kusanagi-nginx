@@ -2,11 +2,13 @@
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM golang:1.26.10-alpine3.24 AS build-go
+ARG TARGETOS TARGETARCH
 COPY files/httpd_check.go /tmp
-RUN go build /tmp/httpd_check.go
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build /tmp/httpd_check.go
 
 ARG TARGETOS TARGETARCH TARGETVARIANT
-FROM --platform=$BUILDPLATFORM alpine:3.24.3
+FROM alpine:3.24.3
+ARG TARGETOS TARGETARCH TARGETVARIANT
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
@@ -135,8 +137,10 @@ RUN set -x \
             && CC=/usr/bin/cc \
             && if [ "$TARGETARCH" = "amd64" ]; then \
                     aioOpts='--with-file-aio'; \
+                    archCflags='-m64 -mtune=generic'; \
                else \
                     aioOpts=''; \
+                    archCflags=''; \
                fi \
             && CXX=/usr/bin/c++ \
             && CONF="--prefix=/etc/nginx \
@@ -200,14 +204,14 @@ RUN set -x \
                 --add-module=./extensions/headers-more-nginx-module \
                 --add-module=./extensions/stream-lua-nginx-module \
                 --add-dynamic-module=./extensions/njs/nginx" \
-            && export CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
+            && export CFLAGS="-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
                 -fexceptions -fstack-protector \
-                -m64 -mtune=generic \
+                ${archCflags} \
                 -Wno-deprecated-declarations \
                 -Wno-cast-function-type \
                 -Wno-unused-parameter \
                 -Wno-stringop-truncation \
-                -Wno-stringop-overflow' \
+                -Wno-stringop-overflow" \
             && patch -p1 < /tmp/build/ngx_pagespeed.patch \
             && NCPUS=$(getconf _NPROCESSORS_ONLN) \
             && ./configure $CONF  \
