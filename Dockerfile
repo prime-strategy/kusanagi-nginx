@@ -1,16 +1,17 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine3.24 AS build-go
+FROM golang:1.26.10-alpine3.24 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
-FROM --platform=$BUILDPLATFORM alpine:3.24.1
+ARG TARGETOS TARGETARCH TARGETVARIANT
+FROM alpine:3.24.3
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.31.2
+ENV NGINX_VERSION=1.31.8
 
 WORKDIR /tmp
 
@@ -74,15 +75,15 @@ RUN set -x \
     && naxsi_version=1.7 \
     && libinjection_version=b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9 \
     && nps_version=1.13.35.2 \
-    && headers_more_module_version=0.39 \
+    && headers_more_module_version=0.40 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.29 \
     && ngx_devel_kit_version=0.3.4 \
     && lua_resty_core_version=0.1.32 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20260415 \
+    && luajit_fork_version=2.1-20261021 \
     && stream_lua_nginx_version=0.0.17 \
-    && njs_version=0.9.9 \
+    && njs_version=1.0.2 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
 # lua resty config
 \
@@ -133,6 +134,13 @@ RUN set -x \
             && export LUAJIT_LIB=/tmp/build/usr/lib \
             && CC=/usr/bin/cc \
             && CXX=/usr/bin/c++ \
+            && if [ "$TARGETARCH" = "amd64" ]; then \
+                   aioOpts='--with-file-aio'; \
+                   archCflags='-m64 -mtune=generic'; \
+               else \
+                   aioOpts=''; \
+                   archCflags=''; \
+               fi \
             && CONF="--prefix=/etc/nginx \
                 --conf-path=/etc/nginx/nginx.conf \
                 --sbin-path=/usr/sbin/nginx \
@@ -178,7 +186,7 @@ RUN set -x \
                 --with-mail \
                 --with-mail_ssl_module \
                 --with-compat \
-                --with-file-aio \
+                $aioOpts \
                 --with-http_v2_module \
                 --with-http_v3_module \
                 --with-http_image_filter_module \
@@ -194,14 +202,14 @@ RUN set -x \
                 --add-module=./extensions/headers-more-nginx-module \
                 --add-module=./extensions/stream-lua-nginx-module \
                 --add-dynamic-module=./extensions/njs/nginx" \
-            && export CFLAGS='-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
+            && export CFLAGS="-O2 -g -pipe -Wp,-D_FORTIFY_SOURCE=2 \
                 -fexceptions -fstack-protector \
-                -m64 -mtune=generic \
+                ${archCflags} \
                 -Wno-deprecated-declarations \
                 -Wno-cast-function-type \
                 -Wno-unused-parameter \
                 -Wno-stringop-truncation \
-                -Wno-stringop-overflow' \
+                -Wno-stringop-overflow" \
             && patch -p1 < /tmp/build/ngx_pagespeed.patch \
             && NCPUS=$(getconf _NPROCESSORS_ONLN) \
             && ./configure $CONF  \
@@ -271,12 +279,6 @@ COPY files/quic_default_server.conf /etc/nginx/conf.d/quic_default_server.conf
 COPY files/naxsi.d /etc/nginx/
 COPY files/kusanagi_naxsi_core.conf /etc/nginx/conf.d/kusanagi_naxsi_core.conf
 COPY files/security.conf /etc/nginx/conf.d/security.conf
-
-
-RUN wget -q -O - https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /tmp \
-    && /tmp/trivy filesystem --skip-files /tmp/trivy --exit-code 1 --no-progress / \
-    && rm /tmp/trivy \
-    && :
 
 EXPOSE 8080/tcp
 EXPOSE 8443/tcp

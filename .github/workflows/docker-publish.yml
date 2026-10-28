@@ -1,0 +1,192 @@
+#//----------------------------------------------------------------------------
+#// Build & publish primestrategy/kusanagi-nginx to Docker Hub
+#//   Replaces the Docker Hub Automated Build that used to run hooks/build.
+#//   Docker tag == git tag (e.g. 2.4.68-r5). No "latest" tag, as before.
+#//
+#//   One runner per architecture: each job builds a single platform, pushes it
+#//   by digest, and the merge job assembles the manifest list. Building every
+#//   platform in one job would serialise the emulated nginx compiles into a
+#//   single 6h budget; split up, each platform gets its own budget and they run
+#//   in parallel.
+#//----------------------------------------------------------------------------
+name: docker-publish
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+-r[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker tag to publish (e.g. 2.4.68-r5). Empty = build only, no push.'
+        required: false
+        default: ''
+
+env:
+  IMAGE_NAME: primestrategy/kusanagi-nginx
+  BUILDKIT_PROGRESS: plain
+  # Pinned: the install script resolves "latest" through the unauthenticated
+  # GitHub API, which is rate-limited from Actions runners. The vulnerability DB
+  # is still fetched fresh on every run, so this does not stale the scan.
+  TRIVY_VERSION: v0.74.0
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      push: ${{ steps.meta.outputs.push }}
+    steps:
+      - name: Resolve docker tag
+        id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            tag="${GITHUB_REF_NAME}"
+          else
+            tag="$INPUT_TAG"
+          fi
+          case "$tag" in
+            ''|[0-9]*.[0-9]*.[0-9]*-r[0-9]*) ;;
+            *) echo "::error::invalid tag '$tag' (expected X.Y.Z-rN)"; exit 1 ;;
+          esac
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          if [ -n "$tag" ]; then
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "push=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Native on the x86 runner.
+          - { platform: linux/amd64,     slug: "amd64",   runner: ubuntu-24.04 }
+          # - { platform: linux/386,       slug: "386",     runner: ubuntu-24.04 }
+          # Native on the arm64 runner (free for public repos).
+          - { platform: linux/arm64/v8,  slug: "arm64v8", runner: ubuntu-24.04-arm }
+          - { platform: linux/arm/v6,    slug: "armv6",   runner: ubuntu-24.04-arm }
+          - { platform: linux/arm/v7,    slug: "armv7",   runner: ubuntu-24.04-arm }
+          # Fully emulated; this is the slow one.
+          # - { platform: linux/riscv64,   slug: "riscv64", runner: ubuntu-24.04 }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        if: needs.prepare.outputs.push == 'true'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Built fresh (no-cache) and exported locally so trivy can gate it before
+      # anything reaches the registry. The -rN releases exist to ship security
+      # updates, so a stale cache hit here would defeat the point.
+      - name: Build image for scanning
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          outputs: type=docker,dest=/tmp/image.tar
+          provenance: false
+          sbom: false
+          no-cache: true
+
+      # Runs natively on the runner rather than inside the image, which is what
+      # makes riscv64 possible at all: trivy publishes no riscv64 binary, so the
+      # old in-image scan could never have run there. Scanning the exported
+      # tarball from the amd64/arm64 runner covers every target equally.
+      - name: Install trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b "${RUNNER_TEMP}/bin" "${TRIVY_VERSION}"
+          echo "${RUNNER_TEMP}/bin" >> "$GITHUB_PATH"
+
+      - name: Scan image
+        run: trivy image --input /tmp/image.tar --exit-code 1 --no-progress
+
+      # Cache hit from the scanning build above, so this only re-exports and
+      # pushes the exact layers trivy just cleared.
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=${{ needs.prepare.outputs.push }}
+          provenance: true
+          sbom: true
+
+      - name: Export digest
+        if: needs.prepare.outputs.push == 'true'
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - name: Upload digest
+        if: needs.prepare.outputs.push == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.slug }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: [prepare, build]
+    if: needs.prepare.outputs.push == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digest-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          docker buildx imagetools create \
+            -t "${IMAGE_NAME}:${TAG}" \
+            $(printf "${IMAGE_NAME}@sha256:%s " *)
+
+      - name: Inspect manifest
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: docker buildx imagetools inspect "${IMAGE_NAME}:${TAG}"
