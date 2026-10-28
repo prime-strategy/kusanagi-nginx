@@ -5,6 +5,7 @@ FROM --platform=$BUILDPLATFORM golang:1.26.10-alpine3.24 AS build-go
 COPY files/httpd_check.go /tmp
 RUN go build /tmp/httpd_check.go
 
+ARG TARGETOS TARGETARCH TARGETVARIANT
 FROM --platform=$BUILDPLATFORM alpine:3.24.3
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
@@ -132,6 +133,11 @@ RUN set -x \
             && export LUAJIT_INC=/tmp/build/usr/include/luajit-2.1 \
             && export LUAJIT_LIB=/tmp/build/usr/lib \
             && CC=/usr/bin/cc \
+            && if [ "$TARGETARCH" = "amd64" ]; then \
+                    aioOpts='--with-file-aio' \
+               else
+                    aioOpts='' \
+               fi \
             && CXX=/usr/bin/c++ \
             && CONF="--prefix=/etc/nginx \
                 --conf-path=/etc/nginx/nginx.conf \
@@ -178,12 +184,12 @@ RUN set -x \
                 --with-mail \
                 --with-mail_ssl_module \
                 --with-compat \
-                --with-file-aio \
                 --with-http_v2_module \
                 --with-http_v3_module \
                 --with-http_image_filter_module \
                 --with-http_geoip_module \
                 --with-http_perl_module \
+                $aioOpts \
                 --with-openssl-opt=enable-ktls \
                 --with-openssl-opt=enable-ec_nistp_64_gcc_128 \
                 --add-module=./extensions/ngx_devel_kit \
