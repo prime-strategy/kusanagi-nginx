@@ -1,13 +1,13 @@
 #//----------------------------------------------------------------------------
 #// KUSANAGI RoD (kusanagi-nginx)
 #//----------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.26.10-alpine3.24 AS build-go
+FROM --platform=$BUILDPLATFORM golang:1.26.11-alpine3.24 AS build-go
 ARG TARGETOS TARGETARCH
 COPY files/httpd_check.go /tmp
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build /tmp/httpd_check.go
 
 ARG TARGETOS TARGETARCH TARGETVARIANT
-FROM alpine:3.24.3
+FROM alpine:3.24.4
 ARG TARGETOS TARGETARCH TARGETVARIANT
 LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
@@ -92,32 +92,32 @@ RUN set -x \
     && export PREFIX=/usr \
     && export LUA_LIB_DIR=/usr/share/lua/5.1 \
     && (cd build \
-        && curl -fSL https://github.com/openresty/lua-resty-core/archive/v${lua_resty_core_version}.tar.gz | tar zxf - \
+        && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/openresty/lua-resty-core/archive/v${lua_resty_core_version}.tar.gz | tar zxf - \
         && (cd lua-resty-core-${lua_resty_core_version} \
             && make -j$(getconf _NPROCESSORS_ONLN) install ) \
-        && curl -fSL https://github.com/openresty/lua-resty-lrucache/archive/v${lua_resty_lrucache_version}.tar.gz | tar zxf - \
+        && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/openresty/lua-resty-lrucache/archive/v${lua_resty_lrucache_version}.tar.gz | tar zxf - \
         && (cd lua-resty-lrucache-${lua_resty_lrucache_version} \
             && make -j$(getconf _NPROCESSORS_ONLN) install ) \
-        && curl -fSL https://github.com/openresty/luajit2/archive/v${luajit_fork_version}.tar.gz | tar zxf - \
+        && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/openresty/luajit2/archive/v${luajit_fork_version}.tar.gz | tar zxf - \
         && (cd luajit2-${luajit_fork_version} \
             && sed -i -e 's,/usr/local,/usr,' Makefile \
             && sed -i -e 's,/usr/local,/usr,' -e 's,LUA_LMULTILIB\t"lib",LUA_LMULTILIB "lib64",' src/luaconf.h \
             && make -j$(getconf _NPROCESSORS_ONLN) install DESTDIR=/tmp/build ) \
 \
 # nginx
-        && curl -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
+        && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar zxf - \
         && mkdir nginx-${NGINX_VERSION}/extensions \
         && (cd ./nginx-${NGINX_VERSION}/extensions \
-            && curl -fSL https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/google/ngx_brotli/archive/v${ngx_brotli_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/openresty/headers-more-nginx-module/archive/v${headers_more_module_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/openresty/${lua_nginx_module_name}/archive/v${lua_nginx_module_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/wargio/naxsi/archive/${naxsi_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/openresty/stream-lua-nginx-module/archive/v${stream_lua_nginx_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/apache/incubator-pagespeed-ngx/archive/v${nps_version}-stable.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/nginx/njs/archive/refs/tags/${njs_version}.tar.gz | tar zxf - \
-            && curl -fSL https://github.com/libinjection/libinjection/archive/${libinjection_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/FRiCKLE/ngx_cache_purge/archive/${ngx_cache_purge_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/google/ngx_brotli/archive/v${ngx_brotli_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/simplresty/ngx_devel_kit/archive/v${ngx_devel_kit_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/openresty/headers-more-nginx-module/archive/v${headers_more_module_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/openresty/${lua_nginx_module_name}/archive/v${lua_nginx_module_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/wargio/naxsi/archive/${naxsi_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/openresty/stream-lua-nginx-module/archive/v${stream_lua_nginx_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/apache/incubator-pagespeed-ngx/archive/v${nps_version}-stable.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/nginx/njs/archive/refs/tags/${njs_version}.tar.gz | tar zxf - \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://github.com/libinjection/libinjection/archive/${libinjection_version}.tar.gz | tar zxf - \
             && mv ngx_cache_purge-${ngx_cache_purge_version} ngx_cache_purge \
             && mv ngx_brotli-${ngx_brotli_version} ngx_brotli \
             && mv ngx_devel_kit-${ngx_devel_kit_version} ngx_devel_kit \
@@ -129,7 +129,7 @@ RUN set -x \
             && mv stream-lua-nginx-module-${stream_lua_nginx_version} stream-lua-nginx-module \
             && nps_dir=$(find . -name "*pagespeed-ngx-*" -type d) \
             && mv $nps_dir ngx_nps \
-            && curl -fSL https://dl.google.com/dl/page-speed/psol/${nps_version}-x64.tar.gz | tar zxf - -C ngx_nps \
+            && curl  --retry 5 --retry-delay 5 --retry-all-errors -fSL https://dl.google.com/dl/page-speed/psol/${nps_version}-x64.tar.gz | tar zxf - -C ngx_nps \
             && mv njs-${njs_version} njs ) \
         && (cd nginx-${NGINX_VERSION} \
             && export LUAJIT_INC=/tmp/build/usr/include/luajit-2.1 \
