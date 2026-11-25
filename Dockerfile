@@ -11,7 +11,7 @@ LABEL maintainer="kusanagi@prime-strategy.co.jp"
 
 ENV PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 
-ENV NGINX_VERSION=1.31.8
+ENV NGINX_VERSION=1.31.10
 
 WORKDIR /tmp
 
@@ -75,13 +75,13 @@ RUN set -x \
     && naxsi_version=1.7 \
     && libinjection_version=b9fcaaf9e50e9492807b23ffcc6af46ee1f203b9 \
     && nps_version=1.13.35.2 \
-    && headers_more_module_version=0.40 \
+    && headers_more_module_version=0.42 \
     && lua_nginx_module_name=lua-nginx-module \
     && lua_nginx_module_version=0.10.29 \
     && ngx_devel_kit_version=0.3.4 \
     && lua_resty_core_version=0.1.32 \
     && lua_resty_lrucache_version=0.15 \
-    && luajit_fork_version=2.1-20261021 \
+    && luajit_fork_version=2.1-20261107 \
     && stream_lua_nginx_version=0.0.17 \
     && njs_version=1.0.2 \
     && apk add --no-cache --virtual .builddep --force-overwrite $NGINX_DEPS \
